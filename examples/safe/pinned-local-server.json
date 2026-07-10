@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "safe-demo": {
+      "command": "uvx",
+      "args": ["trusted-server==1.2.3"],
+      "env": {
+        "API_KEY": "${API_KEY}"
+      }
+    }
+  }
+}
