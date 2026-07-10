@@ -25,6 +25,8 @@ def check_ssrf_targets(server: ServerConfig):
             parsed = urlparse(url)
             scheme = parsed.scheme.lower()
             host = (parsed.hostname or "").lower()
+            if location == "url" and _is_local_transport_url(scheme, host):
+                continue
             if scheme in DANGEROUS_SCHEMES:
                 findings.append(make_finding(
                     server, "MCP009", "critical", "high",
@@ -50,6 +52,10 @@ def check_ssrf_targets(server: ServerConfig):
                     "Avoid routing MCP, OAuth, or tool requests to loopback, link-local, private, or reserved network addresses unless explicitly isolated.",
                 ))
     return unique_findings(findings)
+
+
+def _is_local_transport_url(scheme: str, host: str) -> bool:
+    return scheme in {"http", "https"} and (host in LOCAL_NAMES or host in {"127.0.0.1", "::1"})
 
 
 def _is_private_or_reserved(host: str) -> bool:

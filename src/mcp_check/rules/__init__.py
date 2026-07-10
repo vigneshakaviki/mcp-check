@@ -12,6 +12,7 @@ from .runtime_privileges import check_runtime_privileges
 from .secrets import check_secrets
 from .sensitive_paths import check_sensitive_paths
 from .ssrf import check_ssrf_targets
+from .transport_security import check_transport_security
 
 
 Rule = Callable[[ServerConfig], List[Finding]]
@@ -25,6 +26,7 @@ RULES: List[Rule] = [
     check_oauth_config,
     check_metadata_injection,
     check_runtime_privileges,
+    check_transport_security,
 ]
 
 

@@ -103,6 +103,9 @@ Examples included:
 | `examples/unsafe/shell-command.json` | shell and download execution |
 | `examples/unsafe/private-network-url.json` | SSRF, cloud metadata, and dangerous URL schemes |
 | `examples/unsafe/oauth-broad-scope.json` | broad OAuth scopes, HTTP OAuth URLs, and embedded client secret |
+| `examples/unsafe/local-http-transport.json` | local HTTP MCP transport requiring auth/origin hardening |
+| `examples/unsafe/wildcard-bind.json` | MCP server binding to all interfaces |
+| `examples/unsafe/oauth-token-query.json` | OAuth token in URL query and missing PKCE S256 metadata |
 
 ## GitHub Action
 
@@ -119,7 +122,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.3.0
+      - uses: vigneshakaviki/mcp-check@v0.4.0
         with:
           paths: |
             config/claude_desktop_config.json
@@ -160,6 +163,7 @@ Use `*` for `server` or `location` only when the suppression really applies broa
 | MCP008 | privileged containers, host namespaces, Docker socket mounts, broad host mounts, or broad environment inheritance |
 | MCP009 | SSRF-prone URLs, private network targets, cloud metadata endpoints, or dangerous URL schemes |
 | MCP010 | OAuth or bearer credentials, broad scopes, and unsafe OAuth endpoint URLs |
+| MCP011 | local HTTP transport hardening gaps and wildcard network binds |
 
 Findings include severity, confidence, evidence, location, and a remediation. Credential evidence is redacted in all reports.
 

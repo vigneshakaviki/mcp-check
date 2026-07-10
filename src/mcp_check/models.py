@@ -76,7 +76,7 @@ class ScanResult:
 
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "tool": {"name": "mcp-check", "version": "0.3.0"},
+            "tool": {"name": "mcp-check", "version": "0.4.0"},
             "source": self.source,
             "servers_scanned": self.servers_scanned,
             "finding_count": len(self.findings),

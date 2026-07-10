@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List
 
 from .models import Finding, ServerConfig
-from .rules.helpers import all_text_parts, urls_in_text
+from .rules.helpers import all_text_parts, is_placeholder, urls_in_text
 
 
 def summarize_capabilities(servers: Iterable[ServerConfig], findings: Iterable[Finding]) -> Dict[str, Any]:
@@ -39,6 +39,8 @@ def _urls(servers: List[ServerConfig]) -> List[str]:
     urls = set()
     for server in servers:
         for _, value in all_text_parts(server):
+            if is_placeholder(value):
+                continue
             urls.update(urls_in_text(value))
     return sorted(urls)
 

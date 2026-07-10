@@ -49,6 +49,25 @@ def test_oauth_misconfigurations_are_detected():
     assert result.capabilities["oauth"] is True
 
 
+def test_local_http_transport_is_not_ssrf_but_is_warned():
+    result = scan_file(ROOT.parent / "examples" / "unsafe" / "local-http-transport.json")
+    rule_ids = {finding.rule_id for finding in result.findings}
+    assert "MCP011" in rule_ids
+    assert "MCP009" not in rule_ids
+
+
+def test_wildcard_bind_is_detected():
+    result = scan_file(ROOT.parent / "examples" / "unsafe" / "wildcard-bind.json")
+    assert any(finding.rule_id == "MCP011" for finding in result.findings)
+
+
+def test_oauth_token_query_and_missing_pkce_s256_are_detected():
+    result = scan_file(ROOT.parent / "examples" / "unsafe" / "oauth-token-query.json")
+    titles = {finding.title for finding in result.findings}
+    assert "OAuth token appears in a URL query string" in titles
+    assert "OAuth metadata does not advertise PKCE S256 support" in titles
+
+
 def test_sarif_is_valid_enough_for_ci():
     payload = json.loads(to_sarif(scan_file(ROOT / "fixtures" / "mixed.json")))
     assert payload["version"] == "2.1.0"

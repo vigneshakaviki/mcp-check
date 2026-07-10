@@ -10,6 +10,7 @@ from .helpers import all_text_parts, is_placeholder, make_finding, redact, uniqu
 TOKEN_KEY = re.compile(r"(?:ACCESS|BEARER|REFRESH|ID|OAUTH|AUTH).*(?:TOKEN|SECRET)|CLIENT_SECRET", re.IGNORECASE)
 BROAD_SCOPE = re.compile(r"(?:^|\s|[,])(?:\*|admin(?::\*)?|files:\*|repo(?::\*)?|write:\*|read:\*)($|\s|[,])", re.IGNORECASE)
 AUTH_LOCATION = re.compile(r"(?:authorization_endpoint|token_endpoint|issuer|jwks_uri|redirect_uri|callback|oauth)", re.IGNORECASE)
+TOKEN_QUERY = re.compile(r"(?:access_token|refresh_token|id_token|client_secret)=", re.IGNORECASE)
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
@@ -37,6 +38,22 @@ def check_oauth_config(server: ServerConfig):
                 value,
                 location,
                 "Request the smallest OAuth scopes needed for the server and avoid wildcard or admin scopes.",
+            ))
+        if TOKEN_QUERY.search(value):
+            findings.append(make_finding(
+                server, "MCP010", "critical", "high",
+                "OAuth token appears in a URL query string",
+                value,
+                location,
+                "Never place OAuth access tokens, refresh tokens, ID tokens, or client secrets in URLs; use Authorization headers or secret storage.",
+            ))
+        if "code_challenge_methods_supported" in location.lower() and "S256" not in value:
+            findings.append(make_finding(
+                server, "MCP010", "high", "medium",
+                "OAuth metadata does not advertise PKCE S256 support",
+                value,
+                location,
+                "Require PKCE with the S256 code challenge method for MCP OAuth authorization flows.",
             ))
         if not AUTH_LOCATION.search(location):
             continue

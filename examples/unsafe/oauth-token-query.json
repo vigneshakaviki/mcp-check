@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "token-query-demo": {
+      "url": "https://mcp.example.test/mcp?access_token=abc123",
+      "oauth": {
+        "code_challenge_methods_supported": ["plain"]
+      }
+    }
+  }
+}

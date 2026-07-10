@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "local-http-demo": {
+      "url": "http://localhost:64342/sse"
+    }
+  }
+}

@@ -43,7 +43,7 @@ class McpCheck < Formula
 
   desc "Offline security scanner for MCP server configurations"
   homepage "https://github.com/vigneshakaviki/mcp-check"
-  url "https://files.pythonhosted.org/packages/source/m/mcp-check/mcp_check-0.3.0.tar.gz"
+  url "https://files.pythonhosted.org/packages/source/m/mcp-check/mcp_check-0.4.0.tar.gz"
   sha256 "UPDATE_WITH_RELEASE_SHA256"
   license "MIT"
 
