@@ -5,12 +5,14 @@ from pathlib import Path
 from .models import ScanResult
 from .parsers import load_config, parse_servers
 from .rules import scan_server
+from .suppressions import apply_suppressions, load_suppressions
 
 
-def scan_file(path: Path) -> ScanResult:
+def scan_file(path: Path, suppressions_path: Path | None = None) -> ScanResult:
     config = load_config(path)
     servers = parse_servers(config)
     findings = []
     for server in servers:
         findings.extend(scan_server(server))
-    return ScanResult(str(path), findings, len(servers))
+    active, suppressed = apply_suppressions(findings, load_suppressions(suppressions_path))
+    return ScanResult(str(path), active, len(servers), suppressed)

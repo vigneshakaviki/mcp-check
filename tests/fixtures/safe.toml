@@ -1,0 +1,6 @@
+[mcpServers.safe_toml]
+command = "uvx"
+args = ["trusted-server==1.2.3"]
+
+[mcpServers.safe_toml.env]
+API_KEY = "${API_KEY}"

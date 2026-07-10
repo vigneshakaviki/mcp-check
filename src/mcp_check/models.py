@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, List
+from dataclasses import asdict, dataclass, replace
+from typing import Any, Dict, List, Optional
 
 
 SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
@@ -43,9 +43,16 @@ class Finding:
     location: str
     recommendation: str
     server: str
+    suppression_reason: Optional[str] = None
 
     def as_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        value = asdict(self)
+        if value["suppression_reason"] is None:
+            del value["suppression_reason"]
+        return value
+
+    def suppressed(self, reason: str) -> "Finding":
+        return replace(self, suppression_reason=reason)
 
 
 @dataclass(frozen=True)
@@ -53,6 +60,11 @@ class ScanResult:
     source: str
     findings: List[Finding]
     servers_scanned: int
+    suppressed_findings: Optional[List[Finding]] = None
+
+    def __post_init__(self) -> None:
+        if self.suppressed_findings is None:
+            object.__setattr__(self, "suppressed_findings", [])
 
     def highest_severity(self) -> str:
         if not self.findings:
@@ -61,10 +73,12 @@ class ScanResult:
 
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "tool": {"name": "mcp-check", "version": "0.1.0"},
+            "tool": {"name": "mcp-check", "version": "0.2.0"},
             "source": self.source,
             "servers_scanned": self.servers_scanned,
             "finding_count": len(self.findings),
+            "suppressed_finding_count": len(self.suppressed_findings),
             "highest_severity": self.highest_severity(),
             "findings": [finding.as_dict() for finding in self.findings],
+            "suppressed_findings": [finding.as_dict() for finding in self.suppressed_findings],
         }

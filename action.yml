@@ -8,6 +8,9 @@ inputs:
     description: Minimum severity that fails the check
     required: false
     default: high
+  suppressions:
+    description: Optional suppression file path
+    required: false
 runs:
   using: composite
   steps:
@@ -24,6 +27,7 @@ runs:
       env:
         MCP_CHECK_PATHS: ${{ inputs.paths }}
         MCP_CHECK_FAIL_ON: ${{ inputs.fail-on }}
+        MCP_CHECK_SUPPRESSIONS: ${{ inputs.suppressions }}
       run: |
         set -euo pipefail
         mkdir -p mcp-check-results
@@ -31,7 +35,11 @@ runs:
         while IFS= read -r path; do
           [ -z "$path" ] && continue
           name="$(basename "$path" .json)"
-          mcp-check scan "$path" --format sarif --output "mcp-check-results/${name}.sarif" --fail-on "$MCP_CHECK_FAIL_ON" || status=$?
+          args=(scan "$path" --format sarif --output "mcp-check-results/${name}.sarif" --fail-on "$MCP_CHECK_FAIL_ON")
+          if [ -n "$MCP_CHECK_SUPPRESSIONS" ]; then
+            args+=(--suppressions "$MCP_CHECK_SUPPRESSIONS")
+          fi
+          mcp-check "${args[@]}" || status=$?
         done <<< "$MCP_CHECK_PATHS"
         python - <<'PY'
         import json

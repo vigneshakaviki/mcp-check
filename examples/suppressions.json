@@ -1,0 +1,10 @@
+{
+  "suppressions": [
+    {
+      "rule_id": "MCP004",
+      "server": "npx-demo",
+      "location": "args",
+      "reason": "Demo suppression for an intentionally unpinned example package."
+    }
+  ]
+}

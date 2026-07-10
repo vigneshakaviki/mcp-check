@@ -51,12 +51,33 @@ uv run mcp-check scan examples/unsafe/docker-socket.json
 
 ```bash
 mcp-check scan ./claude_desktop_config.json
+mcp-check scan ./mcp.yaml
+mcp-check scan ./mcp.toml
 mcp-check scan ./claude_desktop_config.json --format json
 mcp-check scan ./claude_desktop_config.json --format sarif --output results.sarif
 mcp-check scan ./claude_desktop_config.json --fail-on high
+mcp-check scan ./claude_desktop_config.json --suppressions ./examples/suppressions.json
 ```
 
-The first release supports JSON files with an `mcpServers` object, including common Claude Desktop and Cursor-style shapes.
+The scanner supports JSON, YAML, and TOML files with an `mcpServers` object, including common Claude Desktop and Cursor-style shapes.
+
+## Client Presets
+
+List common MCP client config paths:
+
+```bash
+mcp-check paths
+mcp-check paths --preset claude-desktop
+mcp-check paths --preset cursor --existing
+```
+
+Scan existing configs from known client locations:
+
+```bash
+mcp-check scan --preset all
+mcp-check scan --preset claude-desktop
+mcp-check scan --preset cursor
+```
 
 ## Example Configs
 
@@ -96,12 +117,32 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.1.0
+      - uses: vigneshakaviki/mcp-check@v0.2.0
         with:
           paths: |
             config/claude_desktop_config.json
+          suppressions: config/mcp-check-suppressions.json
           fail-on: high
 ```
+
+## Suppressions
+
+Known findings can be suppressed explicitly by rule, server, and location. Suppressed findings are still visible in JSON and SARIF output.
+
+```json
+{
+  "suppressions": [
+    {
+      "rule_id": "MCP004",
+      "server": "npx-demo",
+      "location": "args",
+      "reason": "Reviewed package source; pinning tracked separately."
+    }
+  ]
+}
+```
+
+Use `*` for `server` or `location` only when the suppression really applies broadly.
 
 ## Rules
 
@@ -136,11 +177,9 @@ uv run mcp-check scan tests/fixtures/mixed.json
 
 ## Roadmap
 
-- YAML and TOML config support.
-- Allowlist and suppression file support.
 - Baseline mode for existing findings.
 - More MCP client config path presets.
-- Homebrew and PyPI distribution.
+- Publish to PyPI and Homebrew.
 - Optional provenance checks for known MCP server packages.
 
 ## Security

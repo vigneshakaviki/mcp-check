@@ -17,6 +17,11 @@ def test_safe_fixture_has_no_findings():
     assert result.findings == []
 
 
+def test_yaml_and_toml_fixtures_are_supported():
+    assert scan_file(ROOT / "fixtures" / "safe.yaml").findings == []
+    assert scan_file(ROOT / "fixtures" / "safe.toml").findings == []
+
+
 def test_mixed_fixture_detects_risks_and_redacts_secret():
     result = scan_file(ROOT / "fixtures" / "mixed.json")
     rule_ids = {finding.rule_id for finding in result.findings}
@@ -31,10 +36,29 @@ def test_sarif_is_valid_enough_for_ci():
     assert payload["runs"][0]["results"]
 
 
+def test_suppressions_keep_findings_visible(tmp_path):
+    suppressions = tmp_path / "suppressions.json"
+    suppressions.write_text(json.dumps({
+        "suppressions": [{
+            "rule_id": "MCP004",
+            "server": "unsafe-tools",
+            "location": "args",
+            "reason": "accepted for test",
+        }],
+    }), encoding="utf-8")
+
+    result = scan_file(ROOT / "fixtures" / "mixed.json", suppressions)
+    assert not any(finding.rule_id == "MCP004" and finding.server == "unsafe-tools" for finding in result.findings)
+    assert any(finding.rule_id == "MCP004" and finding.suppression_reason == "accepted for test" for finding in result.suppressed_findings)
+
+    payload = json.loads(to_sarif(result))
+    assert any("suppressions" in item for item in payload["runs"][0]["results"])
+
+
 def test_invalid_config_is_reported(tmp_path):
     path = tmp_path / "invalid.json"
     path.write_text("[]", encoding="utf-8")
-    with pytest.raises(ConfigError, match="root must be a JSON object"):
+    with pytest.raises(ConfigError, match="root must be a JSON/YAML/TOML object"):
         load_config(path)
 
 
