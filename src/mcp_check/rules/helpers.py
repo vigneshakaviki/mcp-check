@@ -32,6 +32,13 @@ def all_text_parts(server: ServerConfig) -> List[Tuple[str, str]]:
     return parts
 
 
+URL_PATTERN = re.compile(r"\b(?:https?|file|data|javascript|vbscript):[^\s\"'<>),]+", re.IGNORECASE)
+
+
+def urls_in_text(value: str) -> List[str]:
+    return [match.group(0).rstrip("].}") for match in URL_PATTERN.finditer(value)]
+
+
 def make_finding(
     server: ServerConfig,
     rule_id: str,

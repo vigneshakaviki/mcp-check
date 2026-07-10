@@ -61,10 +61,13 @@ class ScanResult:
     findings: List[Finding]
     servers_scanned: int
     suppressed_findings: Optional[List[Finding]] = None
+    capabilities: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if self.suppressed_findings is None:
             object.__setattr__(self, "suppressed_findings", [])
+        if self.capabilities is None:
+            object.__setattr__(self, "capabilities", {})
 
     def highest_severity(self) -> str:
         if not self.findings:
@@ -73,12 +76,13 @@ class ScanResult:
 
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "tool": {"name": "mcp-check", "version": "0.2.0"},
+            "tool": {"name": "mcp-check", "version": "0.3.0"},
             "source": self.source,
             "servers_scanned": self.servers_scanned,
             "finding_count": len(self.findings),
             "suppressed_finding_count": len(self.suppressed_findings),
             "highest_severity": self.highest_severity(),
+            "capabilities": self.capabilities,
             "findings": [finding.as_dict() for finding in self.findings],
             "suppressed_findings": [finding.as_dict() for finding in self.suppressed_findings],
         }

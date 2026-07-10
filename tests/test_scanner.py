@@ -27,6 +27,26 @@ def test_mixed_fixture_detects_risks_and_redacts_secret():
     rule_ids = {finding.rule_id for finding in result.findings}
     assert {"MCP001", "MCP002", "MCP003", "MCP004", "MCP005", "MCP007", "MCP008"}.issubset(rule_ids)
     assert all("sk-12345678901234567890" not in finding.evidence for finding in result.findings)
+    assert result.capabilities["shell"] is True
+    assert result.capabilities["docker"] is True
+    assert result.capabilities["network"]
+
+
+def test_private_network_and_dangerous_urls_are_detected():
+    result = scan_file(ROOT.parent / "examples" / "unsafe" / "private-network-url.json")
+    rule_ids = {finding.rule_id for finding in result.findings}
+    assert "MCP009" in rule_ids
+    assert any("169.254.169.254" in finding.evidence for finding in result.findings)
+    assert result.capabilities["ssrf"] is True
+
+
+def test_oauth_misconfigurations_are_detected():
+    result = scan_file(ROOT.parent / "examples" / "unsafe" / "oauth-broad-scope.json")
+    titles = {finding.title for finding in result.findings}
+    assert "MCP configuration requests broad OAuth scopes" in titles
+    assert "OAuth URL does not use HTTPS" in titles
+    assert "OAuth or bearer credential appears directly in MCP configuration" in titles
+    assert result.capabilities["oauth"] is True
 
 
 def test_sarif_is_valid_enough_for_ci():

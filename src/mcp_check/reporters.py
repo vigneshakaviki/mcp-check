@@ -17,6 +17,8 @@ def to_terminal(result: ScanResult) -> str:
     ]
     if result.suppressed_findings:
         lines.append("Suppressed %d finding(s)." % len(result.suppressed_findings))
+    if result.capabilities:
+        lines.extend(_capability_lines(result.capabilities))
     if not result.findings:
         lines.append("No findings.")
         return "\n".join(lines) + "\n"
@@ -29,6 +31,23 @@ def to_terminal(result: ScanResult) -> str:
             "  Fix: %s" % finding.recommendation,
         ])
     return "\n".join(lines) + "\n"
+
+
+def _capability_lines(capabilities: Dict[str, Any]) -> list[str]:
+    lines = ["", "Capabilities:"]
+    for key in ("shell", "docker", "oauth", "metadata_injection", "ssrf"):
+        if capabilities.get(key):
+            lines.append("  %s: yes" % key.replace("_", "-"))
+    for key in ("filesystem", "secrets", "network", "packages"):
+        values = capabilities.get(key) or []
+        if values:
+            preview = ", ".join(values[:3])
+            if len(values) > 3:
+                preview += ", +%d more" % (len(values) - 3)
+            lines.append("  %s: %s" % (key, preview))
+    if len(lines) == 2:
+        lines.append("  none detected")
+    return lines
 
 
 def _level(severity: str) -> str:
@@ -54,7 +73,7 @@ def to_sarif(result: ScanResult) -> str:
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
         "runs": [{
-            "tool": {"driver": {"name": "mcp-check", "version": "0.2.0", "rules": list(rules.values())}},
+            "tool": {"driver": {"name": "mcp-check", "version": "0.3.0", "rules": list(rules.values())}},
             "results": results,
         }],
     }

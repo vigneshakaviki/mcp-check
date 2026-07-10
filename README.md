@@ -101,6 +101,8 @@ Examples included:
 | `examples/unsafe/ssh-path-mount.json` | sensitive local path |
 | `examples/unsafe/git-main-install.json` | mutable Git branch install |
 | `examples/unsafe/shell-command.json` | shell and download execution |
+| `examples/unsafe/private-network-url.json` | SSRF, cloud metadata, and dangerous URL schemes |
+| `examples/unsafe/oauth-broad-scope.json` | broad OAuth scopes, HTTP OAuth URLs, and embedded client secret |
 
 ## GitHub Action
 
@@ -117,7 +119,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.2.0
+      - uses: vigneshakaviki/mcp-check@v0.3.0
         with:
           paths: |
             config/claude_desktop_config.json
@@ -156,8 +158,20 @@ Use `*` for `server` or `location` only when the suppression really applies broa
 | MCP006 | remote network destinations in command arguments or environment values |
 | MCP007 | prompt-injection language in tool descriptions, prompts, annotations, or metadata |
 | MCP008 | privileged containers, host namespaces, Docker socket mounts, broad host mounts, or broad environment inheritance |
+| MCP009 | SSRF-prone URLs, private network targets, cloud metadata endpoints, or dangerous URL schemes |
+| MCP010 | OAuth or bearer credentials, broad scopes, and unsafe OAuth endpoint URLs |
 
 Findings include severity, confidence, evidence, location, and a remediation. Credential evidence is redacted in all reports.
+
+Terminal and JSON reports also include a capability summary for quick review:
+
+```text
+Capabilities:
+  shell: yes
+  docker: yes
+  network: https://example.test/install.sh
+  packages: docker run --rm
+```
 
 These rules cover static signals from published MCP security research: tool poisoning, mutable supply-chain references, overbroad local privileges, static credentials, and weak transport. Runtime controls such as semantic approval, per-tool authorization, provenance signing, sandboxing, and audit logging still need to be enforced by the MCP client, gateway, or server runtime.
 

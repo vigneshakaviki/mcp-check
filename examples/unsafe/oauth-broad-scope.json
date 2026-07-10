@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "oauth-demo": {
+      "url": "https://mcp.example.test",
+      "oauth": {
+        "authorization_endpoint": "http://auth.example.test/authorize",
+        "token_endpoint": "https://auth.example.test/token",
+        "scopes": "admin files:*"
+      },
+      "env": {
+        "OAUTH_CLIENT_SECRET": "client-secret-demo-value"
+      }
+    }
+  }
+}

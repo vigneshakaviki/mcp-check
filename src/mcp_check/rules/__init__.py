@@ -6,10 +6,12 @@ from ..models import Finding, ServerConfig
 from .command_execution import check_command_execution
 from .metadata_injection import check_metadata_injection
 from .network_access import check_network_access
+from .oauth import check_oauth_config
 from .package_provenance import check_package_provenance
 from .runtime_privileges import check_runtime_privileges
 from .secrets import check_secrets
 from .sensitive_paths import check_sensitive_paths
+from .ssrf import check_ssrf_targets
 
 
 Rule = Callable[[ServerConfig], List[Finding]]
@@ -19,6 +21,8 @@ RULES: List[Rule] = [
     check_secrets,
     check_package_provenance,
     check_network_access,
+    check_ssrf_targets,
+    check_oauth_config,
     check_metadata_injection,
     check_runtime_privileges,
 ]
