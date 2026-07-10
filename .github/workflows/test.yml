@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv run --with 'pytest>=8' pytest -q
       - run: uv run mcp-check scan examples/safe/pinned-local-server.json --fail-on low
       - run: uv run mcp-check scan examples/unsafe/docker-socket.json
