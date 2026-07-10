@@ -40,7 +40,7 @@ Issues = "https://github.com/vigneshakaviki/mcp-check/issues"
 mcp-check = "mcp_check.cli:main"
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+test = ["pytest>=9.1.1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
