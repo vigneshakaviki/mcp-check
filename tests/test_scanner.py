@@ -41,3 +41,23 @@ def test_invalid_config_is_reported(tmp_path):
 def test_missing_servers_is_reported():
     with pytest.raises(ConfigError, match="mcpServers"):
         parse_servers({})
+
+
+def test_placeholder_credentials_are_not_reported(tmp_path):
+    path = tmp_path / "placeholder.json"
+    path.write_text(json.dumps({
+        "mcpServers": {
+            "template": {
+                "command": "node",
+                "args": ["server.js"],
+                "env": {
+                    "SUPABASE_URL": "https://YOUR_PROJECT_REF.supabase.co",
+                    "SUPABASE_SERVICE_ROLE_KEY": "YOUR_SUPABASE_SERVICE_ROLE_KEY",
+                    "MCP_API_KEY": "PASTE_YOUR_KEY_FROM_SETTINGS",
+                },
+            },
+        },
+    }), encoding="utf-8")
+
+    result = scan_file(path)
+    assert result.findings == []

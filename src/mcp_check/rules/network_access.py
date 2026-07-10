@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from ..models import ServerConfig
-from .helpers import make_finding, text_parts
+from .helpers import is_placeholder, make_finding, text_parts
 
 
 URL = re.compile(r"https?://([^/\s]+)", re.IGNORECASE)
@@ -13,6 +13,8 @@ LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 def check_network_access(server: ServerConfig):
     findings = []
     for location, value in text_parts(server):
+        if is_placeholder(value):
+            continue
         match = URL.search(value)
         if not match:
             continue

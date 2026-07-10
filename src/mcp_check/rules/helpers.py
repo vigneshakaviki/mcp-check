@@ -63,4 +63,16 @@ def unique_findings(findings: Iterable[Finding]) -> List[Finding]:
 
 
 def is_placeholder(value: str) -> bool:
-    return bool(re.match(r"^\$\{[^}]+\}$", value)) or value.lower() in {"", "changeme", "your-key", "<secret>"}
+    normalized = value.strip().lower()
+    if bool(re.match(r"^\$\{[^}]+\}$", value)):
+        return True
+    if normalized in {"", "changeme", "change-me", "your-key", "<secret>", "<token>", "<api-key>"}:
+        return True
+    return any(marker in normalized for marker in (
+        "your_",
+        "your-",
+        "your ",
+        "paste_your",
+        "replace_me",
+        "replace-me",
+    ))
