@@ -1,10 +1,23 @@
 # mcp-check
 
+[![Test](https://github.com/vigneshakaviki/mcp-check/actions/workflows/test.yml/badge.svg)](https://github.com/vigneshakaviki/mcp-check/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/vigneshakaviki/mcp-check)](https://github.com/vigneshakaviki/mcp-check/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Security linting for Model Context Protocol server configs before your AI agent runs them.
 
 `mcp-check` is an offline static scanner for MCP configuration files. It shows when a config grants risky access to shell commands, local files, Docker, network destinations, package installers, or secrets.
 
 It never launches or connects to an MCP server.
+
+## Documentation
+
+- [Rule reference](docs/rules.md)
+- [Configuration](docs/configuration.md)
+- [GitHub Action](docs/github-action.md)
+- [Packaging](PACKAGING.md)
+- [Changelog](CHANGELOG.md)
+- [Support](SUPPORT.md)
 
 ## Why
 
@@ -50,6 +63,8 @@ uv run mcp-check scan examples/unsafe/docker-socket.json
 ## Scan
 
 ```bash
+mcp-check --version
+mcp-check rules
 mcp-check scan ./claude_desktop_config.json
 mcp-check scan ./mcp.yaml
 mcp-check scan ./mcp.toml
@@ -122,7 +137,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.4.0
+      - uses: vigneshakaviki/mcp-check@v0.5.0
         with:
           paths: |
             config/claude_desktop_config.json
@@ -157,15 +172,11 @@ Use `*` for `server` or `location` only when the suppression really applies broa
 | MCP002 | sensitive local paths such as SSH keys, cloud credentials, and `.env` files |
 | MCP003 | credentials embedded directly in configuration |
 | MCP004 | unpinned packages, mutable Git refs, and mutable container images |
-| MCP005 | insecure remote HTTP URLs |
-| MCP006 | remote network destinations in command arguments or environment values |
-| MCP007 | prompt-injection language in tool descriptions, prompts, annotations, or metadata |
-| MCP008 | privileged containers, host namespaces, Docker socket mounts, broad host mounts, or broad environment inheritance |
-| MCP009 | SSRF-prone URLs, private network targets, cloud metadata endpoints, or dangerous URL schemes |
-| MCP010 | OAuth or bearer credentials, broad scopes, and unsafe OAuth endpoint URLs |
-| MCP011 | local HTTP transport hardening gaps and wildcard network binds |
+| MCP005-MCP011 | network, metadata, runtime, SSRF, OAuth, and transport risks |
 
 Findings include severity, confidence, evidence, location, and a remediation. Credential evidence is redacted in all reports.
+
+See [docs/rules.md](docs/rules.md) or run `mcp-check rules` for the full rule catalog.
 
 Terminal and JSON reports also include a capability summary for quick review:
 

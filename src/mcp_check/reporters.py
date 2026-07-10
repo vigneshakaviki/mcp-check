@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict
 
+from . import __version__
 from .models import Finding, ScanResult, SEVERITY_ORDER
 
 
@@ -73,7 +74,7 @@ def to_sarif(result: ScanResult) -> str:
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
         "runs": [{
-            "tool": {"driver": {"name": "mcp-check", "version": "0.4.0", "rules": list(rules.values())}},
+            "tool": {"driver": {"name": "mcp-check", "version": __version__, "rules": list(rules.values())}},
             "results": results,
         }],
     }

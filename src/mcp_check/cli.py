@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .models import SEVERITY_ORDER
 from .parsers import ConfigError
 from .presets import candidate_paths, existing_preset_paths
 from .reporters import to_json, to_sarif, to_terminal
+from .rule_catalog import RULE_CATALOG
 from .scanner import scan_file
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="mcp-check", description="Audit MCP server configuration without launching servers.")
+    parser.add_argument("--version", action="version", version="mcp-check %s" % __version__)
     commands = parser.add_subparsers(dest="command", required=True)
     scan = commands.add_parser("scan", help="scan an MCP configuration")
     scan.add_argument("path", type=Path, nargs="?", help="JSON, YAML, or TOML MCP configuration")
@@ -25,11 +29,22 @@ def build_parser() -> argparse.ArgumentParser:
     paths = commands.add_parser("paths", help="show common MCP client config paths")
     paths.add_argument("--preset", choices=("all", "claude-desktop", "claude-code", "cursor"), default="all")
     paths.add_argument("--existing", action="store_true", help="show only paths that exist")
+
+    rules = commands.add_parser("rules", help="list scanner rules")
+    rules.add_argument("--format", choices=("terminal", "json"), default="terminal")
     return parser
 
 
 def main(argv=None) -> None:
     args = build_parser().parse_args(argv)
+    if args.command == "rules":
+        if args.format == "json":
+            print(json.dumps({"rules": RULE_CATALOG}, indent=2, sort_keys=True))
+        else:
+            for rule in RULE_CATALOG:
+                print("%s  %-13s  %s" % (rule["id"], rule["severity"], rule["title"]))
+        return
+
     if args.command == "paths":
         paths = existing_preset_paths(args.preset) if args.existing else candidate_paths()[args.preset]
         for path in paths:
@@ -65,9 +80,19 @@ def main(argv=None) -> None:
 def _merge_results(results):
     from .models import ScanResult
 
+    capabilities = {}
+    for result in results:
+        for key, value in result.capabilities.items():
+            if isinstance(value, list):
+                capabilities.setdefault(key, [])
+                capabilities[key].extend(item for item in value if item not in capabilities[key])
+            else:
+                capabilities[key] = bool(capabilities.get(key)) or bool(value)
+
     return ScanResult(
         source=", ".join(result.source for result in results),
         findings=[finding for result in results for finding in result.findings],
         servers_scanned=sum(result.servers_scanned for result in results),
         suppressed_findings=[finding for result in results for finding in result.suppressed_findings],
+        capabilities=capabilities,
     )

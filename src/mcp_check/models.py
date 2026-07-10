@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, replace
 from typing import Any, Dict, List, Optional
 
+from . import __version__
+
 
 SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
@@ -76,7 +78,7 @@ class ScanResult:
 
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "tool": {"name": "mcp-check", "version": "0.4.0"},
+            "tool": {"name": "mcp-check", "version": __version__},
             "source": self.source,
             "servers_scanned": self.servers_scanned,
             "finding_count": len(self.findings),

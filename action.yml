@@ -1,8 +1,11 @@
 name: mcp-check
 description: Audit MCP server configuration files without launching MCP servers
+branding:
+  icon: shield
+  color: red
 inputs:
   paths:
-    description: Newline-separated JSON MCP configuration paths
+    description: Newline-separated JSON, YAML, or TOML MCP configuration paths
     required: true
   fail-on:
     description: Minimum severity that fails the check

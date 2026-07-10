@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from mcp_check.cli import main
 from mcp_check.parsers import ConfigError, load_config, parse_servers
 from mcp_check.reporters import to_sarif
 from mcp_check.scanner import scan_file
@@ -124,3 +125,17 @@ def test_placeholder_credentials_are_not_reported(tmp_path):
 
     result = scan_file(path)
     assert result.findings == []
+
+
+def test_rules_command_lists_catalog(capsys):
+    main(["rules"])
+    output = capsys.readouterr().out
+    assert "MCP001" in output
+    assert "MCP011" in output
+
+
+def test_version_flag(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0
+    assert "mcp-check" in capsys.readouterr().out
