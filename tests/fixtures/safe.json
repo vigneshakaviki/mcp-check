@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "uvx",
+      "args": ["mcp-server-filesystem==1.2.3", "./project"],
+      "env": {"API_KEY": "${API_KEY}"}
+    }
+  }
+}
