@@ -48,6 +48,12 @@ Example output:
 
 ## Install
 
+From PyPI:
+
+```bash
+python -m pip install mcp-check-security
+```
+
 From a checkout:
 
 ```bash
