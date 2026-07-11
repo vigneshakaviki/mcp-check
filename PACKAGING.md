@@ -1,6 +1,6 @@
 # Packaging
 
-This project is ready to publish as a Python package. Publishing still requires maintainer-owned PyPI and Homebrew credentials.
+This project is ready to publish as a Python package under the PyPI name `mcp-check-security`. Publishing still requires maintainer-owned PyPI and Homebrew credentials.
 
 ## PyPI
 
@@ -43,7 +43,7 @@ class McpCheck < Formula
 
   desc "Offline security scanner for MCP server configurations"
   homepage "https://github.com/vigneshakaviki/mcp-check"
-  url "https://files.pythonhosted.org/packages/source/m/mcp-check/mcp_check-0.5.0.tar.gz"
+  url "https://files.pythonhosted.org/packages/source/m/mcp-check-security/mcp_check_security-0.5.0.tar.gz"
   sha256 "UPDATE_WITH_RELEASE_SHA256"
   license "MIT"
 

@@ -52,7 +52,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mcp-check"
+name = "mcp-check-security"
 version = "0.5.0"
 source = { editable = "." }
 dependencies = [
