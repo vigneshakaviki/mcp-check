@@ -78,6 +78,7 @@ mcp-check scan ./claude_desktop_config.json --format json
 mcp-check scan ./claude_desktop_config.json --format sarif --output results.sarif
 mcp-check scan ./claude_desktop_config.json --fail-on high
 mcp-check scan ./claude_desktop_config.json --suppressions ./examples/suppressions.json
+mcp-check scan ./claude_desktop_config.json --baseline ./previous-results.json
 ```
 
 The scanner supports JSON, YAML, and TOML files with an `mcpServers` object, including common Claude Desktop and Cursor-style shapes.
@@ -196,6 +197,8 @@ Capabilities:
 
 These rules cover static signals from published MCP security research: tool poisoning, mutable supply-chain references, overbroad local privileges, static credentials, and weak transport. Runtime controls such as semantic approval, per-tool authorization, provenance signing, sandboxing, and audit logging still need to be enforced by the MCP client, gateway, or server runtime.
 
+Baseline mode compares a fresh scan against a previous `mcp-check --format json` or `--format sarif` report and only shows new findings. That makes it practical to adopt the scanner in a repo that already has accepted risk.
+
 ## When To Use It
 
 - Before adding a new MCP server to Claude Desktop, Cursor, or an AI coding agent.
@@ -212,7 +215,6 @@ uv run mcp-check scan tests/fixtures/mixed.json
 
 ## Roadmap
 
-- Baseline mode for existing findings.
 - More MCP client config path presets.
 - Publish to PyPI and Homebrew.
 - Optional provenance checks for known MCP server packages.

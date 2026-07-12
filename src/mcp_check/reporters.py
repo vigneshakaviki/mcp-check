@@ -16,12 +16,21 @@ def to_terminal(result: ScanResult) -> str:
         "mcp-check: %s" % result.source,
         "Scanned %d MCP server(s); %d finding(s)." % (result.servers_scanned, len(result.findings)),
     ]
+    if result.baseline:
+        lines.append(
+            "Compared with baseline: %d new, %d unchanged, %d absent."
+            % (
+                result.baseline.get("new", 0),
+                result.baseline.get("unchanged", 0),
+                result.baseline.get("absent", 0),
+            )
+        )
     if result.suppressed_findings:
         lines.append("Suppressed %d finding(s)." % len(result.suppressed_findings))
     if result.capabilities:
         lines.extend(_capability_lines(result.capabilities))
     if not result.findings:
-        lines.append("No findings.")
+        lines.append("No new findings." if result.baseline else "No findings.")
         return "\n".join(lines) + "\n"
     for finding in result.findings:
         lines.extend([
@@ -60,7 +69,7 @@ def to_sarif(result: ScanResult) -> str:
     results = []
     for finding in result.findings:
         rules.setdefault(finding.rule_id, {"id": finding.rule_id, "name": finding.title, "help": {"text": finding.recommendation}})
-        results.append(_sarif_result(result, finding))
+        results.append(_sarif_result(result, finding, baseline_state="new" if result.baseline else None))
     for finding in result.suppressed_findings:
         rules.setdefault(finding.rule_id, {"id": finding.rule_id, "name": finding.title, "help": {"text": finding.recommendation}})
         suppressed = _sarif_result(result, finding)
@@ -75,14 +84,16 @@ def to_sarif(result: ScanResult) -> str:
         "version": "2.1.0",
         "runs": [{
             "tool": {"driver": {"name": "mcp-check", "version": __version__, "rules": list(rules.values())}},
+            "properties": {"baseline": result.baseline} if result.baseline else {},
             "results": results,
         }],
     }
     return json.dumps(payload, indent=2, sort_keys=True) + "\n"
 
 
-def _sarif_result(result: ScanResult, finding: Finding) -> Dict[str, Any]:
-    return {
+def _sarif_result(result: ScanResult, finding: Finding, baseline_state: str | None = None) -> Dict[str, Any]:
+    properties = {"severity": finding.severity, "confidence": finding.confidence}
+    payload = {
             "ruleId": finding.rule_id,
             "level": _level(finding.severity),
             "message": {"text": "%s: %s" % (finding.title, finding.evidence)},
@@ -93,5 +104,8 @@ def _sarif_result(result: ScanResult, finding: Finding) -> Dict[str, Any]:
                 },
                 "logicalLocations": [{"name": "%s.%s" % (finding.server, finding.location)}],
             }],
-            "properties": {"severity": finding.severity, "confidence": finding.confidence},
+            "properties": properties,
         }
+    if baseline_state:
+        payload["baselineState"] = baseline_state
+    return payload

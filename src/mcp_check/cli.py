@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("path", type=Path, nargs="?", help="JSON, YAML, or TOML MCP configuration")
     scan.add_argument("--preset", choices=("all", "claude-desktop", "claude-code", "cursor"), help="scan existing configs from common MCP client paths")
     scan.add_argument("--suppressions", type=Path, help="JSON, YAML, or TOML suppression file")
+    scan.add_argument("--baseline", type=Path, help="compare against a previous mcp-check JSON or SARIF report and only show new findings")
     scan.add_argument("--format", choices=("terminal", "json", "sarif"), default="terminal")
     scan.add_argument("--output", type=Path, help="write the report to a file instead of stdout")
     scan.add_argument("--fail-on", choices=("low", "medium", "high", "critical"), help="return exit code 1 at this severity or above")
@@ -57,10 +58,10 @@ def main(argv=None) -> None:
             if not paths:
                 print("mcp-check: error: no existing config paths found for preset %r" % args.preset, file=sys.stderr)
                 raise SystemExit(2)
-            results = [scan_file(path, args.suppressions) for path in paths]
+            results = [scan_file(path, args.suppressions, args.baseline) for path in paths]
             result = _merge_results(results)
         elif args.path:
-            result = scan_file(args.path, args.suppressions)
+            result = scan_file(args.path, args.suppressions, args.baseline)
         else:
             print("mcp-check: error: scan requires a path or --preset", file=sys.stderr)
             raise SystemExit(2)
@@ -81,6 +82,7 @@ def _merge_results(results):
     from .models import ScanResult
 
     capabilities = {}
+    baseline = {}
     for result in results:
         for key, value in result.capabilities.items():
             if isinstance(value, list):
@@ -88,6 +90,13 @@ def _merge_results(results):
                 capabilities[key].extend(item for item in value if item not in capabilities[key])
             else:
                 capabilities[key] = bool(capabilities.get(key)) or bool(value)
+        if result.baseline:
+            baseline.setdefault("new", 0)
+            baseline.setdefault("unchanged", 0)
+            baseline.setdefault("absent", 0)
+            baseline["new"] += int(result.baseline.get("new", 0))
+            baseline["unchanged"] += int(result.baseline.get("unchanged", 0))
+            baseline["absent"] += int(result.baseline.get("absent", 0))
 
     return ScanResult(
         source=", ".join(result.source for result in results),
@@ -95,4 +104,5 @@ def _merge_results(results):
         servers_scanned=sum(result.servers_scanned for result in results),
         suppressed_findings=[finding for result in results for finding in result.suppressed_findings],
         capabilities=capabilities,
+        baseline=baseline,
     )
