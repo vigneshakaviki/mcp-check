@@ -32,6 +32,7 @@ mcp-check scan --preset cursor
 mcp-check scan ./mcp.json --format terminal
 mcp-check scan ./mcp.json --format json
 mcp-check scan ./mcp.json --format sarif --output results.sarif
+mcp-check scan ./mcp.json --baseline ./baseline.json
 ```
 
 ## CI Failure Threshold

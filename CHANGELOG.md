@@ -2,6 +2,12 @@
 
 All notable changes to `mcp-check` are documented here.
 
+## Unreleased
+
+- Added `--baseline` support for diffing against a previous JSON or SARIF report.
+- Terminal reports now call out new, unchanged, and absent findings when a baseline is supplied.
+- SARIF output now carries baseline comparison metadata for diff mode.
+
 ## v0.5.0
 
 - Added `mcp-check rules` and `mcp-check rules --format json`.

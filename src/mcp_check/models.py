@@ -47,6 +47,9 @@ class Finding:
     server: str
     suppression_reason: Optional[str] = None
 
+    def signature(self) -> tuple[str, str, str, str, str]:
+        return (self.rule_id, self.server, self.location, self.title, self.evidence)
+
     def as_dict(self) -> Dict[str, Any]:
         value = asdict(self)
         if value["suppression_reason"] is None:
@@ -64,12 +67,15 @@ class ScanResult:
     servers_scanned: int
     suppressed_findings: Optional[List[Finding]] = None
     capabilities: Optional[Dict[str, Any]] = None
+    baseline: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if self.suppressed_findings is None:
             object.__setattr__(self, "suppressed_findings", [])
         if self.capabilities is None:
             object.__setattr__(self, "capabilities", {})
+        if self.baseline is None:
+            object.__setattr__(self, "baseline", {})
 
     def highest_severity(self) -> str:
         if not self.findings:
@@ -77,7 +83,7 @@ class ScanResult:
         return max(self.findings, key=lambda item: SEVERITY_ORDER[item.severity]).severity
 
     def as_dict(self) -> Dict[str, Any]:
-        return {
+        value = {
             "tool": {"name": "mcp-check", "version": __version__},
             "source": self.source,
             "servers_scanned": self.servers_scanned,
@@ -88,3 +94,6 @@ class ScanResult:
             "findings": [finding.as_dict() for finding in self.findings],
             "suppressed_findings": [finding.as_dict() for finding in self.suppressed_findings],
         }
+        if self.baseline:
+            value["baseline"] = self.baseline
+        return value

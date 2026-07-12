@@ -95,6 +95,26 @@ def test_suppressions_keep_findings_visible(tmp_path):
     assert any("suppressions" in item for item in payload["runs"][0]["results"])
 
 
+def test_baseline_filters_known_findings_as_json(tmp_path):
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(json.dumps(scan_file(ROOT / "fixtures" / "mixed.json").as_dict()), encoding="utf-8")
+
+    result = scan_file(ROOT / "fixtures" / "mixed.json", baseline_path=baseline)
+    assert result.findings == []
+    assert result.baseline["new"] == 0
+    assert result.baseline["unchanged"] > 0
+
+
+def test_baseline_filters_known_findings_as_sarif(tmp_path):
+    baseline = tmp_path / "baseline.sarif"
+    baseline.write_text(to_sarif(scan_file(ROOT / "fixtures" / "mixed.json")), encoding="utf-8")
+
+    result = scan_file(ROOT / "fixtures" / "mixed.json", baseline_path=baseline)
+    assert result.findings == []
+    assert result.baseline["new"] == 0
+    assert result.baseline["unchanged"] > 0
+
+
 def test_invalid_config_is_reported(tmp_path):
     path = tmp_path / "invalid.json"
     path.write_text("[]", encoding="utf-8")
