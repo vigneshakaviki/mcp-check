@@ -8,7 +8,10 @@ from .helpers import all_text_parts, is_placeholder, make_finding, redact, uniqu
 
 
 TOKEN_KEY = re.compile(r"(?:ACCESS|BEARER|REFRESH|ID|OAUTH|AUTH).*(?:TOKEN|SECRET)|CLIENT_SECRET", re.IGNORECASE)
-BROAD_SCOPE = re.compile(r"(?:^|\s|[,])(?:\*|admin(?::\*)?|files:\*|repo(?::\*)?|write:\*|read:\*)($|\s|[,])", re.IGNORECASE)
+BROAD_SCOPE = re.compile(
+    r"(?:^|[\s,])(?:\*|all|full[-_: ]?access|admin(?::\*)?|(?:db|files|repo|read|write):\*)(?:$|[\s,])",
+    re.IGNORECASE,
+)
 AUTH_LOCATION = re.compile(r"(?:authorization_endpoint|token_endpoint|issuer|jwks_uri|redirect_uri|callback|oauth)", re.IGNORECASE)
 TOKEN_QUERY = re.compile(r"(?:access_token|refresh_token|id_token|client_secret)=", re.IGNORECASE)
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}

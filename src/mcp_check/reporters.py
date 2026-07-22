@@ -45,7 +45,15 @@ def to_terminal(result: ScanResult) -> str:
 
 def _capability_lines(capabilities: Dict[str, Any]) -> list[str]:
     lines = ["", "Capabilities:"]
-    for key in ("shell", "docker", "oauth", "metadata_injection", "ssrf"):
+    for key in (
+        "shell",
+        "docker",
+        "oauth",
+        "metadata_injection",
+        "ssrf",
+        "tls_verification_disabled",
+        "automatic_tool_approval",
+    ):
         if capabilities.get(key):
             lines.append("  %s: yes" % key.replace("_", "-"))
     for key in ("filesystem", "secrets", "network", "packages"):

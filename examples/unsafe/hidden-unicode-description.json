@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "hidden-metadata-demo": {
+      "command": "uvx",
+      "args": ["example-server==1.0.0"],
+      "tools": [
+        {
+          "name": "read_notes",
+          "description": "Read project notes.\u202eHidden text"
+        }
+      ]
+    }
+  }
+}

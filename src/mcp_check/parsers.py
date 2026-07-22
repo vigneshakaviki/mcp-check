@@ -73,11 +73,13 @@ def load_config(path: Path) -> Dict[str, Any]:
 
 
 def parse_servers(config: Dict[str, Any]) -> List[ServerConfig]:
-    raw_servers = config.get("mcpServers")
-    if raw_servers is None:
-        raise ConfigError("configuration must contain an object named 'mcpServers'")
+    root_name = next((name for name in ("mcpServers", "mcp_servers", "servers") if name in config), None)
+    if root_name is None:
+        raise ConfigError("configuration must contain an MCP server object named 'mcpServers', 'mcp_servers', or 'servers'")
+
+    raw_servers = config[root_name]
     if not isinstance(raw_servers, dict):
-        raise ConfigError("'mcpServers' must be a JSON object")
+        raise ConfigError("%r must be an object" % root_name)
 
     servers = []
     for name, data in raw_servers.items():

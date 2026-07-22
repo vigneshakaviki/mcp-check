@@ -68,6 +68,18 @@ RULE_CATALOG: List[Dict[str, str]] = [
         "id": "MCP011",
         "severity": "medium-high",
         "title": "Transport hardening gap",
-        "description": "Local HTTP transport hardening gaps and wildcard network binds.",
+        "description": "Local HTTP transport hardening gaps, wildcard network binds, and wildcard browser origins.",
+    },
+    {
+        "id": "MCP012",
+        "severity": "high",
+        "title": "TLS verification disabled",
+        "description": "Flags, environment variables, or settings that disable certificate verification or secure transport enforcement.",
+    },
+    {
+        "id": "MCP013",
+        "severity": "medium-high",
+        "title": "Automatic tool approval",
+        "description": "Client settings that let named or wildcard MCP tools run without per-call confirmation.",
     },
 ]

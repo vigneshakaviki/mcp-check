@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "wildcard-origin-demo": {
+      "command": "uvx",
+      "args": ["example-server==1.0.0", "--cors-origin", "*"]
+    }
+  }
+}
