@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "id": "apiKey",
+      "type": "promptString",
+      "password": true
+    }
+  ],
+  "servers": {
+    "remote-docs": {
+      "type": "http",
+      "url": "https://mcp.example.test/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:apiKey}"
+      },
+      "alwaysAllow": []
+    }
+  }
+}

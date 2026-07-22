@@ -4,6 +4,11 @@ All notable changes to `mcp-check` are documented here.
 
 ## Unreleased
 
+- Added `MCP012` for explicitly disabled TLS certificate verification.
+- Added `MCP013` for named and wildcard MCP tool auto-approval settings.
+- Expanded embedded-credential detection to remote headers, URL user information, nested auth fields, and command arguments while preserving environment/input references.
+- Added wildcard-origin and hidden-Unicode metadata checks, plus broader OAuth scope detection.
+- Added support for VS Code `servers`, Codex `mcp_servers`, and remote URL field aliases used by Gemini and Windsurf.
 - Added `--baseline` support for diffing against a previous JSON or SARIF report.
 - Terminal reports now call out new, unchanged, and absent findings when a baseline is supplied.
 - SARIF output now carries baseline comparison metadata for diff mode.

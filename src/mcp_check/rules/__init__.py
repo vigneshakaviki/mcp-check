@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, List
 
 from ..models import Finding, ServerConfig
+from .approval_bypass import check_approval_bypass
 from .command_execution import check_command_execution
 from .metadata_injection import check_metadata_injection
 from .network_access import check_network_access
@@ -13,6 +14,7 @@ from .secrets import check_secrets
 from .sensitive_paths import check_sensitive_paths
 from .ssrf import check_ssrf_targets
 from .transport_security import check_transport_security
+from .tls_security import check_tls_security
 
 
 Rule = Callable[[ServerConfig], List[Finding]]
@@ -27,6 +29,8 @@ RULES: List[Rule] = [
     check_metadata_injection,
     check_runtime_privileges,
     check_transport_security,
+    check_tls_security,
+    check_approval_bypass,
 ]
 
 

@@ -32,7 +32,11 @@ class ServerConfig:
 
     @property
     def url(self) -> str:
-        return str(self.data.get("url", ""))
+        for key in ("url", "uri", "httpUrl", "serverUrl"):
+            value = self.data.get(key)
+            if value:
+                return str(value)
+        return ""
 
 
 @dataclass(frozen=True)

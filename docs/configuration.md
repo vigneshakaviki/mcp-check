@@ -1,12 +1,24 @@
 # Configuration
 
-`mcp-check` scans JSON, YAML, and TOML files with an `mcpServers` object.
+`mcp-check` scans JSON, YAML, and TOML files using these current client shapes:
+
+- `mcpServers`: Claude, Cursor, Gemini CLI, and GitHub Copilot CLI
+- `servers`: VS Code `mcp.json`
+- `mcp_servers`: Codex `config.toml`
+
+Remote URLs can use `url`, `uri`, `httpUrl`, or `serverUrl`.
 
 ```bash
 mcp-check scan ./claude_desktop_config.json
 mcp-check scan ./mcp.yaml
 mcp-check scan ./mcp.toml
+mcp-check scan ~/.codex/config.toml
+mcp-check scan ./.vscode/mcp.json
 ```
+
+Secrets referenced through client-supported environment or password-input syntax are treated as references rather than embedded credentials. Literal secrets in `env`, headers, URLs, or command arguments are reported and redacted.
+
+Client-specific server settings are also reviewed when present. Empty `alwaysAllow` and `autoApprove` lists are accepted; named pre-approvals are reported at medium severity and wildcard approval at high severity.
 
 ## Client Presets
 

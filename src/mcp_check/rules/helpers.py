@@ -16,10 +16,14 @@ def text_parts(server: ServerConfig) -> List[Tuple[str, str]]:
 
 
 def all_text_parts(server: ServerConfig) -> List[Tuple[str, str]]:
-    parts: List[Tuple[str, str]] = []
+    return [(path, value) for path, value in all_value_parts(server) if isinstance(value, str)]
+
+
+def all_value_parts(server: ServerConfig) -> List[Tuple[str, Any]]:
+    parts: List[Tuple[str, Any]] = []
 
     def walk(value: Any, path: str) -> None:
-        if isinstance(value, str):
+        if isinstance(value, (str, int, float, bool)) or value is None:
             parts.append((path, value))
         elif isinstance(value, list):
             for index, item in enumerate(value):
@@ -73,7 +77,7 @@ def is_placeholder(value: str) -> bool:
     normalized = value.strip().lower()
     if bool(re.match(r"^\$\{[^}]+\}$", value)):
         return True
-    if normalized in {"", "changeme", "change-me", "your-key", "<secret>", "<token>", "<api-key>"}:
+    if normalized in {"", "...", "changeme", "change-me", "your-key", "<secret>", "<token>", "<api-key>"}:
         return True
     return any(marker in normalized for marker in (
         "your_",
