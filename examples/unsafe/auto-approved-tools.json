@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "repository-admin": {
+      "command": "uvx",
+      "args": ["repository-admin-mcp==1.0.0"],
+      "alwaysAllow": ["delete_repository", "rotate_deploy_key"]
+    }
+  }
+}

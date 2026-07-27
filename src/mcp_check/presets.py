@@ -13,6 +13,12 @@ def candidate_paths() -> Dict[str, List[Path]]:
     home = _home()
     system = platform.system().lower()
     paths = {
+        "codex": [
+            home / ".codex" / "config.toml",
+        ],
+        "copilot-cli": [
+            home / ".copilot" / "mcp-config.json",
+        ],
         "cursor": [
             home / ".cursor" / "mcp.json",
             home / ".cursor" / ".cursor-mcp.json",

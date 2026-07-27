@@ -6,7 +6,7 @@
 
 Security linting for Model Context Protocol server configs before your AI agent runs them.
 
-`mcp-check` is an offline static scanner for MCP configuration files. It shows when a config grants risky access to shell commands, local files, Docker, network destinations, package installers, or secrets.
+`mcp-check` is an offline static scanner for MCP configuration files. It shows when a config grants risky access to shell commands, local files, Docker, network destinations, package installers, or secrets, including credentials hidden in remote-server headers and command arguments.
 
 It never launches or connects to an MCP server.
 
@@ -74,13 +74,16 @@ mcp-check rules
 mcp-check scan ./claude_desktop_config.json
 mcp-check scan ./mcp.yaml
 mcp-check scan ./mcp.toml
+mcp-check scan ~/.codex/config.toml
+mcp-check scan ./.vscode/mcp.json
 mcp-check scan ./claude_desktop_config.json --format json
 mcp-check scan ./claude_desktop_config.json --format sarif --output results.sarif
 mcp-check scan ./claude_desktop_config.json --fail-on high
 mcp-check scan ./claude_desktop_config.json --suppressions ./examples/suppressions.json
+mcp-check scan ./claude_desktop_config.json --baseline ./previous-results.json
 ```
 
-The scanner supports JSON, YAML, and TOML files with an `mcpServers` object, including common Claude Desktop and Cursor-style shapes.
+The scanner supports JSON, YAML, and TOML. It recognizes `mcpServers` (Claude, Cursor, Gemini, and Copilot CLI), `servers` (VS Code), and `mcp_servers` (Codex), plus the common `url`, `uri`, `httpUrl`, and `serverUrl` remote URL fields.
 
 ## Client Presets
 
@@ -89,6 +92,8 @@ List common MCP client config paths:
 ```bash
 mcp-check paths
 mcp-check paths --preset claude-desktop
+mcp-check paths --preset copilot-cli
+mcp-check paths --preset codex
 mcp-check paths --preset cursor --existing
 ```
 
@@ -97,6 +102,8 @@ Scan existing configs from known client locations:
 ```bash
 mcp-check scan --preset all
 mcp-check scan --preset claude-desktop
+mcp-check scan --preset copilot-cli
+mcp-check scan --preset codex
 mcp-check scan --preset cursor
 ```
 
@@ -127,6 +134,11 @@ Examples included:
 | `examples/unsafe/local-http-transport.json` | local HTTP MCP transport requiring auth/origin hardening |
 | `examples/unsafe/wildcard-bind.json` | MCP server binding to all interfaces |
 | `examples/unsafe/oauth-token-query.json` | OAuth token in URL query and missing PKCE S256 metadata |
+| `examples/unsafe/header-secret.json` | literal bearer credential in remote MCP headers |
+| `examples/unsafe/tls-verification-disabled.json` | TLS certificate verification disabled by flag and environment |
+| `examples/unsafe/wildcard-origin.json` | wildcard browser origin policy |
+| `examples/unsafe/hidden-unicode-description.json` | invisible Unicode control in tool metadata |
+| `examples/unsafe/auto-approved-tools.json` | MCP tools configured to bypass per-call approval |
 
 ## GitHub Action
 
@@ -143,7 +155,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.5.0
+      - uses: vigneshakaviki/mcp-check@v0.6.0
         with:
           paths: |
             config/claude_desktop_config.json
@@ -179,6 +191,8 @@ Use `*` for `server` or `location` only when the suppression really applies broa
 | MCP003 | credentials embedded directly in configuration |
 | MCP004 | unpinned packages, mutable Git refs, and mutable container images |
 | MCP005-MCP011 | network, metadata, runtime, SSRF, OAuth, and transport risks |
+| MCP012 | TLS certificate verification or secure transport explicitly disabled |
+| MCP013 | named or wildcard MCP tools configured for automatic approval |
 
 Findings include severity, confidence, evidence, location, and a remediation. Credential evidence is redacted in all reports.
 
@@ -196,6 +210,8 @@ Capabilities:
 
 These rules cover static signals from published MCP security research: tool poisoning, mutable supply-chain references, overbroad local privileges, static credentials, and weak transport. Runtime controls such as semantic approval, per-tool authorization, provenance signing, sandboxing, and audit logging still need to be enforced by the MCP client, gateway, or server runtime.
 
+Baseline mode compares a fresh scan against a previous `mcp-check --format json` or `--format sarif` report and only shows new findings. That makes it practical to adopt the scanner in a repo that already has accepted risk.
+
 ## When To Use It
 
 - Before adding a new MCP server to Claude Desktop, Cursor, or an AI coding agent.
@@ -212,9 +228,8 @@ uv run mcp-check scan tests/fixtures/mixed.json
 
 ## Roadmap
 
-- Baseline mode for existing findings.
-- More MCP client config path presets.
-- Publish to PyPI and Homebrew.
+- More MCP client config path presets and project-level discovery.
+- Homebrew packaging and signed release artifacts.
 - Optional provenance checks for known MCP server packages.
 
 ## Security

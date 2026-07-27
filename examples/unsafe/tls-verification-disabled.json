@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "insecure-tls-demo": {
+      "command": "uvx",
+      "args": ["example-server==1.0.0", "--skip-tls-verify"],
+      "env": {
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+      }
+    }
+  }
+}
