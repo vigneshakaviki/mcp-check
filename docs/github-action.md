@@ -15,7 +15,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.5.0
+      - uses: vigneshakaviki/mcp-check@v0.6.0
         with:
           paths: |
             config/claude_desktop_config.json

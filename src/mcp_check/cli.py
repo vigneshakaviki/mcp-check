@@ -15,12 +15,13 @@ from .scanner import scan_file
 
 
 def build_parser() -> argparse.ArgumentParser:
+    preset_choices = ("all", "claude-desktop", "claude-code", "copilot-cli", "codex", "cursor")
     parser = argparse.ArgumentParser(prog="mcp-check", description="Audit MCP server configuration without launching servers.")
     parser.add_argument("--version", action="version", version="mcp-check %s" % __version__)
     commands = parser.add_subparsers(dest="command", required=True)
     scan = commands.add_parser("scan", help="scan an MCP configuration")
     scan.add_argument("path", type=Path, nargs="?", help="JSON, YAML, or TOML MCP configuration")
-    scan.add_argument("--preset", choices=("all", "claude-desktop", "claude-code", "cursor"), help="scan existing configs from common MCP client paths")
+    scan.add_argument("--preset", choices=preset_choices, help="scan existing configs from common MCP client paths")
     scan.add_argument("--suppressions", type=Path, help="JSON, YAML, or TOML suppression file")
     scan.add_argument("--baseline", type=Path, help="compare against a previous mcp-check JSON or SARIF report and only show new findings")
     scan.add_argument("--format", choices=("terminal", "json", "sarif"), default="terminal")
@@ -28,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--fail-on", choices=("low", "medium", "high", "critical"), help="return exit code 1 at this severity or above")
 
     paths = commands.add_parser("paths", help="show common MCP client config paths")
-    paths.add_argument("--preset", choices=("all", "claude-desktop", "claude-code", "cursor"), default="all")
+    paths.add_argument("--preset", choices=preset_choices, default="all")
     paths.add_argument("--existing", action="store_true", help="show only paths that exist")
 
     rules = commands.add_parser("rules", help="list scanner rules")

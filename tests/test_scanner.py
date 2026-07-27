@@ -5,6 +5,7 @@ import pytest
 
 from mcp_check.cli import main
 from mcp_check.parsers import ConfigError, load_config, parse_servers
+from mcp_check.presets import candidate_paths
 from mcp_check.reporters import to_sarif
 from mcp_check.scanner import scan_file
 
@@ -33,6 +34,15 @@ def test_current_client_config_shapes_are_supported():
     assert codex.servers_scanned == 1
     assert codex.findings == []
     assert codex.capabilities["network"] == ["https://mcp.example.test/mcp"]
+
+
+def test_candidate_paths_include_codex_and_copilot(monkeypatch, tmp_path):
+    monkeypatch.setattr("mcp_check.presets._home", lambda: tmp_path)
+
+    paths = candidate_paths()
+
+    assert paths["codex"] == [tmp_path / ".codex" / "config.toml"]
+    assert paths["copilot-cli"] == [tmp_path / ".copilot" / "mcp-config.json"]
 
 
 @pytest.mark.parametrize("url_field", ["uri", "httpUrl", "serverUrl"])

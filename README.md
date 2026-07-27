@@ -92,6 +92,8 @@ List common MCP client config paths:
 ```bash
 mcp-check paths
 mcp-check paths --preset claude-desktop
+mcp-check paths --preset copilot-cli
+mcp-check paths --preset codex
 mcp-check paths --preset cursor --existing
 ```
 
@@ -100,6 +102,8 @@ Scan existing configs from known client locations:
 ```bash
 mcp-check scan --preset all
 mcp-check scan --preset claude-desktop
+mcp-check scan --preset copilot-cli
+mcp-check scan --preset codex
 mcp-check scan --preset cursor
 ```
 
@@ -151,7 +155,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: vigneshakaviki/mcp-check@v0.5.0
+      - uses: vigneshakaviki/mcp-check@v0.6.0
         with:
           paths: |
             config/claude_desktop_config.json

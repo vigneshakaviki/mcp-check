@@ -27,6 +27,8 @@ List common MCP config paths:
 ```bash
 mcp-check paths
 mcp-check paths --preset claude-desktop
+mcp-check paths --preset copilot-cli
+mcp-check paths --preset codex
 mcp-check paths --preset cursor --existing
 ```
 
@@ -35,6 +37,8 @@ Scan existing configs from known client locations:
 ```bash
 mcp-check scan --preset all
 mcp-check scan --preset claude-desktop
+mcp-check scan --preset copilot-cli
+mcp-check scan --preset codex
 mcp-check scan --preset cursor
 ```
 

@@ -27,8 +27,8 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
       - run: uv build
       - run: uv publish
 ```
@@ -43,7 +43,7 @@ class McpCheck < Formula
 
   desc "Offline security scanner for MCP server configurations"
   homepage "https://github.com/vigneshakaviki/mcp-check"
-  url "https://files.pythonhosted.org/packages/source/m/mcp-check-security/mcp_check_security-0.5.0.tar.gz"
+  url "https://files.pythonhosted.org/packages/source/m/mcp-check-security/mcp_check_security-0.6.0.tar.gz"
   sha256 "UPDATE_WITH_RELEASE_SHA256"
   license "MIT"
 
