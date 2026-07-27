@@ -1,6 +1,6 @@
 # Rule Reference
 
-`mcp-check` rules are stable identifiers. Use these IDs in suppressions, CI policy, and SARIF review for MCP configuration files and skill-bundle scans.
+`mcp-check` rules are stable identifiers for MCP security scanning. Use these IDs in suppressions, CI policy, and SARIF review for Model Context Protocol configs and `SKILL.md` bundle scans.
 
 | ID | Default severity | Rule | What it detects |
 | --- | --- | --- | --- |
