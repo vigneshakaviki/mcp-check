@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 from .baseline import diff_findings, load_signatures
 from .models import Finding, ScanResult
 from .parsers import ConfigError
-from .rules.command_execution import PATTERNS as COMMAND_PATTERNS
 from .rules.helpers import is_placeholder, redact, unique_findings, urls_in_text
 from .rules.oauth import TOKEN_QUERY
 from .rules.package_provenance import _docker_image, _is_commit_pinned, _is_docker_pinned, _is_pinned
@@ -25,7 +24,8 @@ TEXT_SUFFIXES = {
 }
 MAX_TEXT_FILE_BYTES = 256 * 1024
 SENSITIVE_PATH = re.compile(
-    r"(?:~|/Users/[^\s]+|/home/[^\s]+|\.ssh|\.aws|\.config/gcloud|\.kube/config|\.env(?:\.|$)|id_rsa|id_ed25519|credentials\.json)",
+    r"(?:\.ssh(?:/|$)|\.aws(?:/|$)|\.config/gcloud(?:/|$)|\.kube/config\b|"
+    r"\.env(?:\.|$)|id_rsa\b|id_ed25519\b|credentials\.json\b)",
     re.IGNORECASE,
 )
 METADATA_INJECTION = re.compile(
@@ -42,6 +42,14 @@ HIDDEN_UNICODE = re.compile("[\u00ad\u200b\u202a-\u202e\u2060\u2066-\u2069\ufeff
 URL = re.compile(r"https?://([^/\s]+)", re.IGNORECASE)
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 PACKAGE_LINE = re.compile(r"\b(npx|npm|uvx|pipx|docker|podman)\b", re.IGNORECASE)
+SHEBANG = re.compile(r"^#!")
+FENCE = re.compile(r"^```")
+RISKY_COMMAND_PATTERNS = [
+    (re.compile(r"(^|\s)sudo(\s|$)", re.IGNORECASE), "privileged command", "critical"),
+    (re.compile(r"rm\s+-[^\n]*r[^\n]*f|rm\s+-rf", re.IGNORECASE), "recursive force deletion", "critical"),
+    (re.compile(r"(?:curl|wget)\b[^\n|]*\|\s*(?:sh|bash|zsh|fish)\b", re.IGNORECASE), "download and execute pipeline", "critical"),
+    (re.compile(r"\b(?:eval|exec)\s*\(", re.IGNORECASE), "dynamic command execution", "high"),
+]
 
 
 @dataclass(frozen=True)
@@ -184,9 +192,11 @@ def _check_metadata(bundle: SkillBundle, location: str, content: str) -> List[Fi
 
 def _check_commands(bundle: SkillBundle, location: str, content: str) -> List[Finding]:
     for line in _lines(content):
+        if SHEBANG.match(line) or FENCE.match(line):
+            continue
         normalized = line.replace("`", "")
-        for pattern, label, severity in COMMAND_PATTERNS:
-            if re.search(pattern, normalized, re.IGNORECASE):
+        for pattern, label, severity in RISKY_COMMAND_PATTERNS:
+            if pattern.search(normalized):
                 return [_make_finding(
                     bundle, "MCP001", severity, "high",
                     "Skill content contains a %s" % label,
@@ -239,10 +249,13 @@ def _check_urls(bundle: SkillBundle, location: str, content: str) -> List[Findin
     for url in urls_in_text(content):
         if is_placeholder(url):
             continue
+        url = url.rstrip("`")
         parsed = urlparse(url)
         scheme = parsed.scheme.lower()
         host = (parsed.hostname or "").lower()
-        if scheme in DANGEROUS_SCHEMES:
+        if scheme in {"http", "https"} and not host:
+            continue
+        if scheme in DANGEROUS_SCHEMES - {"file"}:
             findings.append(_make_finding(
                 bundle, "MCP009", "critical", "high",
                 "Skill content contains a dangerous URL scheme",
@@ -250,6 +263,8 @@ def _check_urls(bundle: SkillBundle, location: str, content: str) -> List[Findin
                 location,
                 "Reject javascript:, data:, file:, and similar URL schemes in skill instructions and references.",
             ))
+            continue
+        if scheme == "file":
             continue
         if host in CLOUD_METADATA_HOSTS:
             findings.append(_make_finding(
@@ -260,7 +275,11 @@ def _check_urls(bundle: SkillBundle, location: str, content: str) -> List[Findin
                 "Remove cloud metadata endpoints from skill instructions and block them at network policy boundaries.",
             ))
             continue
-        if host in LOCAL_NAMES or _is_private_or_reserved(host):
+        if host in LOCAL_NAMES:
+            continue
+        if host in {"127.0.0.1", "::1"}:
+            continue
+        if _is_private_or_reserved(host):
             findings.append(_make_finding(
                 bundle, "MCP009", "high", "high",
                 "Skill content references a local or private network URL",
@@ -327,7 +346,7 @@ def _check_package_provenance(bundle: SkillBundle, location: str, content: str) 
     for line in _lines(content):
         if not PACKAGE_LINE.search(line):
             continue
-        tokens = line.strip().split()
+        tokens = line.replace("`", "").strip().split()
         if not tokens:
             continue
         command = tokens[0].lower()
