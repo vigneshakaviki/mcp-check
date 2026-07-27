@@ -42,6 +42,37 @@ def test_unsafe_skill_bundle_detects_multiple_risks():
     assert result.capabilities["tls_verification_disabled"] is True
 
 
+def test_skill_scan_ignores_common_docs_and_loopback_false_positives(tmp_path):
+    skill = tmp_path / "loopback-skill"
+    (skill / "scripts").mkdir(parents=True)
+    (skill / "references").mkdir()
+    (skill / "SKILL.md").write_text(
+        "# Skill\n\n```bash\nxcrun simctl list\n```\n\n"
+        "Open http://127.0.0.1:3200 and file:///path/to/file.swift for local preview.\n",
+        encoding="utf-8",
+    )
+    (skill / "scripts" / "run.sh").write_text("#!/usr/bin/env bash\nxcrun simctl list\n", encoding="utf-8")
+    (skill / "references" / "paths.md").write_text("Cache directory: ~/.ios-simulator-skill/cache/\n", encoding="utf-8")
+
+    result = scan_skill(skill)
+
+    assert result.findings == []
+
+
+def test_skill_scan_ignores_command_substitution_without_risky_action(tmp_path):
+    skill = tmp_path / "substitution-skill"
+    (skill / "scripts").mkdir(parents=True)
+    (skill / "SKILL.md").write_text("# Skill\n", encoding="utf-8")
+    (skill / "scripts" / "run.sh").write_text(
+        "#!/usr/bin/env bash\nsource \"$(dirname \"$0\")/_utils.sh\"\nAPP=$(find . -name \"*.app\" | head -1)\n",
+        encoding="utf-8",
+    )
+
+    result = scan_skill(skill)
+
+    assert result.findings == []
+
+
 def test_skill_scan_accepts_explicit_skill_file():
     bundle = load_skill_bundle(ROOT / "fixtures" / "skill-safe" / "SKILL.md")
     assert bundle.name == "skill-safe"
