@@ -14,7 +14,7 @@ def to_json(result: ScanResult) -> str:
 def to_terminal(result: ScanResult) -> str:
     lines = [
         "mcp-check: %s" % result.source,
-        "Scanned %d MCP server(s); %d finding(s)." % (result.servers_scanned, len(result.findings)),
+        "Scanned %d %s(s); %d finding(s)." % (result.servers_scanned, result.scanned_kind, len(result.findings)),
     ]
     if result.baseline:
         lines.append(

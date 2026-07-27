@@ -4,6 +4,8 @@ All notable changes to `mcp-check` are documented here.
 
 ## Unreleased
 
+- Added `scan-skill` for offline scanning of skill bundles rooted at `SKILL.md`, including sibling `scripts/`, `references/`, and text assets.
+
 ## v0.6.0 - 2026-07-27
 
 - Added preset path discovery for Codex `~/.codex/config.toml` and GitHub Copilot CLI `~/.copilot/mcp-config.json`.

@@ -12,6 +12,7 @@ from .presets import candidate_paths, existing_preset_paths
 from .reporters import to_json, to_sarif, to_terminal
 from .rule_catalog import RULE_CATALOG
 from .scanner import scan_file
+from .skill_scanner import scan_skill
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,6 +28,14 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--format", choices=("terminal", "json", "sarif"), default="terminal")
     scan.add_argument("--output", type=Path, help="write the report to a file instead of stdout")
     scan.add_argument("--fail-on", choices=("low", "medium", "high", "critical"), help="return exit code 1 at this severity or above")
+
+    scan_skill_cmd = commands.add_parser("scan-skill", help="scan a skill bundle without executing it")
+    scan_skill_cmd.add_argument("path", type=Path, help="SKILL.md file or directory containing SKILL.md")
+    scan_skill_cmd.add_argument("--suppressions", type=Path, help="JSON, YAML, or TOML suppression file")
+    scan_skill_cmd.add_argument("--baseline", type=Path, help="compare against a previous mcp-check JSON or SARIF report and only show new findings")
+    scan_skill_cmd.add_argument("--format", choices=("terminal", "json", "sarif"), default="terminal")
+    scan_skill_cmd.add_argument("--output", type=Path, help="write the report to a file instead of stdout")
+    scan_skill_cmd.add_argument("--fail-on", choices=("low", "medium", "high", "critical"), help="return exit code 1 at this severity or above")
 
     paths = commands.add_parser("paths", help="show common MCP client config paths")
     paths.add_argument("--preset", choices=preset_choices, default="all")
@@ -54,18 +63,21 @@ def main(argv=None) -> None:
         return
 
     try:
-        if args.preset:
-            paths = existing_preset_paths(args.preset)
-            if not paths:
-                print("mcp-check: error: no existing config paths found for preset %r" % args.preset, file=sys.stderr)
-                raise SystemExit(2)
-            results = [scan_file(path, args.suppressions, args.baseline) for path in paths]
-            result = _merge_results(results)
-        elif args.path:
-            result = scan_file(args.path, args.suppressions, args.baseline)
+        if args.command == "scan-skill":
+            result = scan_skill(args.path, args.suppressions, args.baseline)
         else:
-            print("mcp-check: error: scan requires a path or --preset", file=sys.stderr)
-            raise SystemExit(2)
+            if args.preset:
+                paths = existing_preset_paths(args.preset)
+                if not paths:
+                    print("mcp-check: error: no existing config paths found for preset %r" % args.preset, file=sys.stderr)
+                    raise SystemExit(2)
+                results = [scan_file(path, args.suppressions, args.baseline) for path in paths]
+                result = _merge_results(results)
+            elif args.path:
+                result = scan_file(args.path, args.suppressions, args.baseline)
+            else:
+                print("mcp-check: error: scan requires a path or --preset", file=sys.stderr)
+                raise SystemExit(2)
     except ConfigError as exc:
         print("mcp-check: error: %s" % exc, file=sys.stderr)
         raise SystemExit(2)
@@ -103,6 +115,7 @@ def _merge_results(results):
         source=", ".join(result.source for result in results),
         findings=[finding for result in results for finding in result.findings],
         servers_scanned=sum(result.servers_scanned for result in results),
+        scanned_kind=results[0].scanned_kind if results else "MCP server",
         suppressed_findings=[finding for result in results for finding in result.suppressed_findings],
         capabilities=capabilities,
         baseline=baseline,
