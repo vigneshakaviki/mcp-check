@@ -10,6 +10,8 @@ Security linting for Model Context Protocol server configs before your AI agent 
 
 It never launches or connects to an MCP server.
 
+It can also scan offline skill bundles rooted at `SKILL.md`, including sibling `scripts/`, `references/`, and text-based `assets/`.
+
 ## Documentation
 
 - [Rule reference](docs/rules.md)
@@ -72,6 +74,7 @@ uv run mcp-check scan examples/unsafe/docker-socket.json
 mcp-check --version
 mcp-check rules
 mcp-check scan ./claude_desktop_config.json
+mcp-check scan-skill ./my-skill
 mcp-check scan ./mcp.yaml
 mcp-check scan ./mcp.toml
 mcp-check scan ~/.codex/config.toml
@@ -81,6 +84,7 @@ mcp-check scan ./claude_desktop_config.json --format sarif --output results.sari
 mcp-check scan ./claude_desktop_config.json --fail-on high
 mcp-check scan ./claude_desktop_config.json --suppressions ./examples/suppressions.json
 mcp-check scan ./claude_desktop_config.json --baseline ./previous-results.json
+mcp-check scan-skill ./my-skill --format json
 ```
 
 The scanner supports JSON, YAML, and TOML. It recognizes `mcpServers` (Claude, Cursor, Gemini, and Copilot CLI), `servers` (VS Code), and `mcp_servers` (Codex), plus the common `url`, `uri`, `httpUrl`, and `serverUrl` remote URL fields.
@@ -139,6 +143,24 @@ Examples included:
 | `examples/unsafe/wildcard-origin.json` | wildcard browser origin policy |
 | `examples/unsafe/hidden-unicode-description.json` | invisible Unicode control in tool metadata |
 | `examples/unsafe/auto-approved-tools.json` | MCP tools configured to bypass per-call approval |
+
+## Skill Bundles
+
+Scan a skill directory or explicit `SKILL.md` file without executing bundled scripts:
+
+```bash
+mcp-check scan-skill ./skills/my-skill
+mcp-check scan-skill ./skills/my-skill/SKILL.md
+```
+
+Skill scanning reviews:
+
+- `SKILL.md` instructions
+- text files under `references/`
+- text scripts under `scripts/`
+- text assets under `assets/`
+
+It detects embedded secrets, prompt-injection language, dangerous shell/download snippets, mutable package installs, sensitive paths, unsafe URLs, and disabled TLS verification instructions.
 
 ## GitHub Action
 

@@ -69,6 +69,7 @@ class ScanResult:
     source: str
     findings: List[Finding]
     servers_scanned: int
+    scanned_kind: str = "MCP server"
     suppressed_findings: Optional[List[Finding]] = None
     capabilities: Optional[Dict[str, Any]] = None
     baseline: Optional[Dict[str, Any]] = None
@@ -91,6 +92,7 @@ class ScanResult:
             "tool": {"name": "mcp-check", "version": __version__},
             "source": self.source,
             "servers_scanned": self.servers_scanned,
+            "scanned_kind": self.scanned_kind,
             "finding_count": len(self.findings),
             "suppressed_finding_count": len(self.suppressed_findings),
             "highest_severity": self.highest_severity(),

@@ -1,6 +1,6 @@
 # Rule Reference
 
-`mcp-check` rules are stable identifiers. Use these IDs in suppressions, CI policy, and SARIF review.
+`mcp-check` rules are stable identifiers. Use these IDs in suppressions, CI policy, and SARIF review for MCP configuration files and skill-bundle scans.
 
 | ID | Default severity | Rule | What it detects |
 | --- | --- | --- | --- |
@@ -18,7 +18,7 @@
 | MCP012 | high | TLS verification disabled | Flags, environment variables, or settings that disable certificate verification or secure transport enforcement |
 | MCP013 | medium-high | Automatic tool approval | Non-empty `alwaysAllow`/`autoApprove` settings that bypass per-call confirmation for named or wildcard tools |
 
-`MCP003` recognizes environment and password-input references such as `${TOKEN}`, `Bearer ${TOKEN}`, and Codex `bearer_token_env_var`; those references are not reported as literal credentials.
+`MCP003` recognizes environment and password-input references such as `${TOKEN}`, `Bearer ${TOKEN}`, and Codex `bearer_token_env_var`; those references are not reported as literal credentials. During skill scanning, literal credential-like values in `SKILL.md`, bundled scripts, and references are still reported.
 
 ## Evidence and Severity Rationale
 

@@ -22,4 +22,12 @@ def scan_file(path: Path, suppressions_path: Path | None = None, baseline_path: 
         baseline = load_signatures(baseline_path)
         active, baseline_summary = diff_findings(active, baseline)
         baseline_summary["source"] = str(baseline_path)
-    return ScanResult(str(path), active, len(servers), suppressed, summarize_capabilities(servers, active), baseline_summary)
+    return ScanResult(
+        source=str(path),
+        findings=active,
+        servers_scanned=len(servers),
+        scanned_kind="MCP server",
+        suppressed_findings=suppressed,
+        capabilities=summarize_capabilities(servers, active),
+        baseline=baseline_summary,
+    )

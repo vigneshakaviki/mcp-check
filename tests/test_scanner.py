@@ -8,6 +8,7 @@ from mcp_check.parsers import ConfigError, load_config, parse_servers
 from mcp_check.presets import candidate_paths
 from mcp_check.reporters import to_sarif
 from mcp_check.scanner import scan_file
+from mcp_check.skill_scanner import load_skill_bundle, scan_skill
 
 
 ROOT = Path(__file__).parent
@@ -22,6 +23,36 @@ def test_safe_fixture_has_no_findings():
 def test_yaml_and_toml_fixtures_are_supported():
     assert scan_file(ROOT / "fixtures" / "safe.yaml").findings == []
     assert scan_file(ROOT / "fixtures" / "safe.toml").findings == []
+
+
+def test_safe_skill_bundle_has_no_findings():
+    result = scan_skill(ROOT / "fixtures" / "skill-safe")
+    assert result.findings == []
+    assert result.scanned_kind == "skill bundle"
+    assert result.capabilities["network"] == []
+
+
+def test_unsafe_skill_bundle_detects_multiple_risks():
+    result = scan_skill(ROOT / "fixtures" / "skill-unsafe")
+    rule_ids = {finding.rule_id for finding in result.findings}
+    assert {"MCP001", "MCP002", "MCP003", "MCP004", "MCP005", "MCP006", "MCP007", "MCP009", "MCP012"}.issubset(rule_ids)
+    assert any("sk-1234567890abcdefghijklmnop" not in finding.evidence for finding in result.findings if finding.rule_id == "MCP003")
+    assert result.capabilities["shell"] is True
+    assert result.capabilities["metadata_injection"] is True
+    assert result.capabilities["tls_verification_disabled"] is True
+
+
+def test_skill_scan_accepts_explicit_skill_file():
+    bundle = load_skill_bundle(ROOT / "fixtures" / "skill-safe" / "SKILL.md")
+    assert bundle.name == "skill-safe"
+    assert "SKILL.md" in bundle.files
+
+
+def test_skill_scan_requires_skill_file_or_directory(tmp_path):
+    path = tmp_path / "notes.md"
+    path.write_text("# not a skill\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="SKILL.md"):
+        load_skill_bundle(path)
 
 
 def test_current_client_config_shapes_are_supported():
@@ -290,6 +321,16 @@ def test_baseline_filters_known_findings_as_sarif(tmp_path):
     assert result.baseline["unchanged"] > 0
 
 
+def test_skill_baseline_filters_known_findings(tmp_path):
+    baseline = tmp_path / "skill-baseline.json"
+    baseline.write_text(json.dumps(scan_skill(ROOT / "fixtures" / "skill-unsafe").as_dict()), encoding="utf-8")
+
+    result = scan_skill(ROOT / "fixtures" / "skill-unsafe", baseline_path=baseline)
+    assert result.findings == []
+    assert result.baseline["new"] == 0
+    assert result.baseline["unchanged"] > 0
+
+
 def test_invalid_config_is_reported(tmp_path):
     path = tmp_path / "invalid.json"
     path.write_text("[]", encoding="utf-8")
@@ -336,3 +377,10 @@ def test_version_flag(capsys):
         main(["--version"])
     assert exc.value.code == 0
     assert "mcp-check" in capsys.readouterr().out
+
+
+def test_scan_skill_command_json(capsys):
+    main(["scan-skill", str(ROOT / "fixtures" / "skill-safe"), "--format", "json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["scanned_kind"] == "skill bundle"
+    assert payload["finding_count"] == 0
