@@ -1,6 +1,8 @@
 # Configuration
 
-`mcp-check` scans JSON, YAML, and TOML files using these current client shapes:
+`mcp-check` scans Model Context Protocol configuration files and `SKILL.md` bundles without executing them. Use this page to see which MCP config shapes and preset locations are supported.
+
+Current MCP config support:
 
 - `mcpServers`: Claude, Cursor, Gemini CLI, and GitHub Copilot CLI
 - `servers`: VS Code `mcp.json`

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mcp-check-security"
 version = "0.6.0"
-description = "Offline security checks for Model Context Protocol server configurations"
+description = "Offline MCP security scanner for Model Context Protocol configs and SKILL.md bundles"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -14,7 +14,17 @@ dependencies = [
 ]
 license = "MIT"
 authors = [{ name = "mcp-check contributors" }]
-keywords = ["mcp", "security", "ai", "developer-tools", "static-analysis"]
+keywords = [
+  "mcp",
+  "model-context-protocol",
+  "security",
+  "security-scanner",
+  "prompt-injection",
+  "github-action",
+  "static-analysis",
+  "ai-security",
+  "developer-tools",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",

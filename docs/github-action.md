@@ -1,6 +1,6 @@
 # GitHub Action
 
-Use `mcp-check` in pull requests to scan MCP config changes and upload SARIF to GitHub code scanning.
+Use `mcp-check` as a GitHub Action to scan MCP config changes in pull requests and upload SARIF to GitHub code scanning.
 
 ```yaml
 name: MCP security
