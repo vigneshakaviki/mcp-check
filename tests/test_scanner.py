@@ -287,6 +287,39 @@ def test_named_and_wildcard_tool_auto_approval_are_detected(tmp_path):
     assert [(item.server, item.severity) for item in approvals] == [("named", "medium"), ("wildcard", "high")]
 
 
+def test_runtime_startup_injection_environment_is_detected(tmp_path):
+    path = tmp_path / "startup-injection.json"
+    path.write_text(json.dumps({
+        "mcpServers": {
+            "node": {
+                "command": "node",
+                "args": ["server.js"],
+                "env": {"NODE_OPTIONS": "--require ./bootstrap.js"},
+            },
+            "native": {
+                "command": "server",
+                "env": {"LD_PRELOAD": "/tmp/trace.dylib"},
+            },
+            "python": {
+                "command": "python",
+                "args": ["server.py"],
+                "env": {"PYTHONPATH": "./plugins"},
+            },
+            "safe": {
+                "command": "node",
+                "args": ["server.js"],
+                "env": {"NODE_ENV": "production", "NODE_OPTIONS": "--max-old-space-size=1024"},
+            },
+        },
+    }), encoding="utf-8")
+
+    result = scan_file(path)
+    findings = [item for item in result.findings if item.rule_id == "MCP014"]
+
+    assert sorted(item.server for item in findings) == ["native", "node", "python"]
+    assert result.capabilities["startup_injection"] is True
+
+
 def test_additional_broad_oauth_scopes_are_detected(tmp_path):
     path = tmp_path / "scopes.json"
     path.write_text(json.dumps({

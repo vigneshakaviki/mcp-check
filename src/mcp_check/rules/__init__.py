@@ -13,6 +13,7 @@ from .runtime_privileges import check_runtime_privileges
 from .secrets import check_secrets
 from .sensitive_paths import check_sensitive_paths
 from .ssrf import check_ssrf_targets
+from .startup_injection import check_startup_injection
 from .transport_security import check_transport_security
 from .tls_security import check_tls_security
 
@@ -28,6 +29,7 @@ RULES: List[Rule] = [
     check_oauth_config,
     check_metadata_injection,
     check_runtime_privileges,
+    check_startup_injection,
     check_transport_security,
     check_tls_security,
     check_approval_bypass,

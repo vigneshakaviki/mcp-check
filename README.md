@@ -182,6 +182,7 @@ The scanner supports JSON, YAML, and TOML. It recognizes `mcpServers` (Claude, C
 | Network and SSRF | insecure HTTP, cloud metadata endpoints, private network URLs |
 | Transport weakness | TLS verification disable, wildcard bind, wildcard origin |
 | Approval bypass | `alwaysAllow` and `autoApprove` style settings |
+| Startup injection | Runtime preload, loader, and startup-hook environment settings |
 
 ## Client Presets
 

@@ -17,6 +17,7 @@
 | MCP011 | medium-high | Transport hardening gap | Local HTTP hardening gaps, wildcard network binds, or wildcard browser origins |
 | MCP012 | high | TLS verification disabled | Flags, environment variables, or settings that disable certificate verification or secure transport enforcement |
 | MCP013 | medium-high | Automatic tool approval | Non-empty `alwaysAllow`/`autoApprove` settings that bypass per-call confirmation for named or wildcard tools |
+| MCP014 | high | Process startup injection | Runtime loader, startup-hook, or module-path environment settings that can execute code before an MCP server starts |
 
 `MCP003` recognizes environment and password-input references such as `${TOKEN}`, `Bearer ${TOKEN}`, and Codex `bearer_token_env_var`; those references are not reported as literal credentials. During skill scanning, literal credential-like values in `SKILL.md`, bundled scripts, and references are still reported.
 
@@ -29,6 +30,7 @@ Last reviewed: 2026-07-22.
 - `MCP010` treats wildcard and omnibus scopes as high risk, following the MCP specification's [scope-minimization guidance](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices#scope-minimization).
 - `MCP011` and `MCP012` are high when configuration exposes the service broadly or disables endpoint identity checks. The MCP [security best practices](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices) require hardened local HTTP access and HTTPS for production authorization endpoints.
 - `MCP013` is medium for named tools and high for wildcard approval. Named pre-approval can be reasonable for audited read-only operations, but wildcard approval removes a consent boundary. The [NSA MCP security guidance](https://media.defense.gov/2026/Jun/02/2003943289/-1/-1/0/CSI_MCP_SECURITY.PDF) identifies poor approval workflows as a systemic risk, and [VS Code's approval guidance](https://code.visualstudio.com/docs/agents/approvals) warns that broad auto-approval bypasses critical protections.
+- `MCP014` is high because runtime loader and startup-hook variables can execute attacker-controlled code before the configured MCP process begins. It supports the MCP security guidance to run local servers with minimal privileges and restricted resources.
 
 List rules from the CLI:
 

@@ -21,6 +21,7 @@ def summarize_capabilities(servers: Iterable[ServerConfig], findings: Iterable[F
         "ssrf": _has_rule(finding_list, "MCP009"),
         "tls_verification_disabled": _has_rule(finding_list, "MCP012"),
         "automatic_tool_approval": _has_rule(finding_list, "MCP013"),
+        "startup_injection": _has_rule(finding_list, "MCP014"),
     }
     return summary
 

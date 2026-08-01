@@ -7,6 +7,7 @@ Use these docs for the main user flows:
 - [MCP security rules](rules.md): rule catalog, severity, and rationale
 - [MCP config support](configuration.md): supported config shapes, presets, and output formats
 - [GitHub Action for MCP security scanning](github-action.md): CI usage and SARIF upload
+- [MCP Security Starts Before Server Startup](blog/scan-mcp-configs-before-they-run.md): why static MCP scanning belongs before approval and execution
 
 Core workflows:
 

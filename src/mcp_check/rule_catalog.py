@@ -82,4 +82,10 @@ RULE_CATALOG: List[Dict[str, str]] = [
         "title": "Automatic tool approval",
         "description": "Client settings that let named or wildcard MCP tools run without per-call confirmation.",
     },
+    {
+        "id": "MCP014",
+        "severity": "high",
+        "title": "Process startup injection",
+        "description": "Runtime loader, startup-hook, or module-path environment settings that can execute code before an MCP server starts.",
+    },
 ]
