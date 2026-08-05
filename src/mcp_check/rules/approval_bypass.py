@@ -7,7 +7,7 @@ from ..models import ServerConfig
 from .helpers import make_finding, unique_findings
 
 
-AUTO_APPROVE_FIELDS = {"always_allow", "auto_approve", "autoapprove"}
+AUTO_APPROVE_FIELDS = {"always_allow", "auto_approve", "autoapprove", "trust"}
 
 
 def check_approval_bypass(server: ServerConfig):
@@ -17,15 +17,27 @@ def check_approval_bypass(server: ServerConfig):
         if isinstance(value, dict):
             for key, item in value.items():
                 location = "%s.%s" % (path, key) if path else str(key)
-                if _snake_case(str(key)) in AUTO_APPROVE_FIELDS and _is_enabled(item):
+                normalized_key = _snake_case(str(key))
+                if normalized_key in AUTO_APPROVE_FIELDS and _is_enabled(item):
                     wildcard = _is_wildcard(item)
+                    if normalized_key == "trust":
+                        title = "MCP server bypasses all tool-call approval"
+                        recommendation = (
+                            "Remove the server-level trust flag and require per-call confirmation; "
+                            "reserve trust for servers you fully control and have already audited."
+                        )
+                    else:
+                        title = "MCP tools can run without per-call approval"
+                        recommendation = (
+                            "Remove broad auto-approval and require confirmation for mutating, external, or "
+                            "sensitive tools; pre-approve only narrowly reviewed read-only operations."
+                        )
                     findings.append(make_finding(
                         server, "MCP013", "high" if wildcard else "medium", "high",
-                        "MCP tools can run without per-call approval",
+                        title,
                         _evidence(str(key), item),
                         location,
-                        "Remove broad auto-approval and require confirmation for mutating, external, or sensitive "
-                        "tools; pre-approve only narrowly reviewed read-only operations.",
+                        recommendation,
                     ))
                 walk(item, location)
         elif isinstance(value, list):

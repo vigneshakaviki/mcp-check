@@ -5,6 +5,10 @@ All notable changes to `mcp-check` are documented here.
 ## Unreleased
 
 - Added `scan-skill` for offline scanning of skill bundles rooted at `SKILL.md`, including sibling `scripts/`, `references/`, and text assets.
+- `MCP008` now detects code-injection environment variables (`LD_PRELOAD`, `DYLD_INSERT_LIBRARIES`, `NODE_OPTIONS`, `PYTHONPATH`, and similar) set on an MCP server or exported in skill scripts.
+- `MCP009` now decodes decimal, hexadecimal, and octal IP obfuscation (for example `2130706433` for `127.0.0.1`) before evaluating SSRF and cloud-metadata targets, closing a filter-bypass gap shared with skill URL scanning.
+- `MCP013` now detects the Gemini CLI-style server-level `trust: true` flag, which bypasses per-call approval for every tool on that server.
+- Added `examples/unsafe/env-var-injection.json`, `examples/unsafe/trust-all-server.json`, and `examples/unsafe/obfuscated-ssrf-ip.json`.
 
 ## v0.6.0 - 2026-07-27
 

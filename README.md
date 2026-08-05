@@ -178,10 +178,10 @@ The scanner supports JSON, YAML, and TOML. It recognizes `mcpServers` (Claude, C
 | Dangerous shell access | `sudo`, `rm -rf`, download-and-execute, dynamic execution |
 | Prompt injection | hidden or coercive instructions in MCP metadata and skills |
 | Mutable installs | unpinned `npx`, `uvx`, Git refs, mutable container images |
-| Runtime privilege | Docker socket, broad mounts, privileged container flags |
-| Network and SSRF | insecure HTTP, cloud metadata endpoints, private network URLs |
+| Runtime privilege | Docker socket, broad mounts, privileged container flags, `LD_PRELOAD`/`NODE_OPTIONS`-style code-injection environment variables |
+| Network and SSRF | insecure HTTP, cloud metadata endpoints, private network URLs, decimal/hex/octal IP obfuscation |
 | Transport weakness | TLS verification disable, wildcard bind, wildcard origin |
-| Approval bypass | `alwaysAllow` and `autoApprove` style settings |
+| Approval bypass | `alwaysAllow`, `autoApprove`, and whole-server `trust` style settings |
 
 ## Client Presets
 
@@ -237,6 +237,9 @@ Examples included:
 | `examples/unsafe/wildcard-origin.json` | wildcard browser origin policy |
 | `examples/unsafe/hidden-unicode-description.json` | invisible Unicode control in tool metadata |
 | `examples/unsafe/auto-approved-tools.json` | MCP tools configured to bypass per-call approval |
+| `examples/unsafe/trust-all-server.json` | server-level `trust` flag that bypasses approval for every tool |
+| `examples/unsafe/env-var-injection.json` | `LD_PRELOAD` and `NODE_OPTIONS` set on the spawned MCP server process |
+| `examples/unsafe/obfuscated-ssrf-ip.json` | cloud metadata address written as an obfuscated decimal IP |
 
 ## Skill Bundles
 
@@ -334,9 +337,9 @@ Use `*` for `server` or `location` only when the suppression really applies broa
 | MCP002 | sensitive local paths such as SSH keys, cloud credentials, and `.env` files |
 | MCP003 | credentials embedded directly in configuration |
 | MCP004 | unpinned packages, mutable Git refs, and mutable container images |
-| MCP005-MCP011 | network, metadata, runtime, SSRF, OAuth, and transport risks |
+| MCP005-MCP011 | network, metadata, runtime, SSRF, OAuth, and transport risks (including code-injection environment variables and obfuscated-IP SSRF bypasses) |
 | MCP012 | TLS certificate verification or secure transport explicitly disabled |
-| MCP013 | named or wildcard MCP tools configured for automatic approval |
+| MCP013 | named/wildcard MCP tools, or a whole server via a `trust` flag, configured for automatic approval |
 
 Findings include severity, confidence, evidence, location, and a remediation. Credential evidence is redacted in all reports.
 

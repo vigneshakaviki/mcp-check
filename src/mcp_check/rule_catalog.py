@@ -50,13 +50,13 @@ RULE_CATALOG: List[Dict[str, str]] = [
         "id": "MCP008",
         "severity": "high-critical",
         "title": "Dangerous runtime privileges",
-        "description": "Privileged containers, host namespaces, Docker socket mounts, broad mounts, or broad environment inheritance.",
+        "description": "Privileged containers, host namespaces, Docker socket mounts, broad mounts, broad environment inheritance, or code-injection environment variables such as LD_PRELOAD and NODE_OPTIONS.",
     },
     {
         "id": "MCP009",
         "severity": "high-critical",
         "title": "SSRF-prone URL",
-        "description": "Private network targets, cloud metadata endpoints, reserved addresses, or dangerous URL schemes.",
+        "description": "Private network targets, cloud metadata endpoints, reserved addresses, dangerous URL schemes, or the same targets written as decimal, hex, or octal IP obfuscation.",
     },
     {
         "id": "MCP010",
@@ -80,6 +80,6 @@ RULE_CATALOG: List[Dict[str, str]] = [
         "id": "MCP013",
         "severity": "medium-high",
         "title": "Automatic tool approval",
-        "description": "Client settings that let named or wildcard MCP tools run without per-call confirmation.",
+        "description": "Client settings that let named or wildcard MCP tools run without per-call confirmation, including whole-server trust flags.",
     },
 ]

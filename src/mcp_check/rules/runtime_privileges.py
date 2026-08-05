@@ -15,6 +15,23 @@ BROAD_MOUNT = re.compile(
 )
 ENV_WILDCARD = re.compile(r"(?:--env-file\s+\S+|--env\s+\*|\benv\s+\*)", re.IGNORECASE)
 
+# Dynamic-linker and language-runtime variables that load attacker-controlled code into
+# the spawned MCP server process. See GHSA-mj59-h3q9-ghfh (workspace MCP stdio config
+# passing NODE_OPTIONS/LD_PRELOAD/BASH_ENV to the child process) and MITRE ATT&CK T1574.006.
+DANGEROUS_ENV_VARS = {
+    "LD_PRELOAD": "critical",
+    "DYLD_INSERT_LIBRARIES": "critical",
+    "LD_LIBRARY_PATH": "high",
+    "DYLD_LIBRARY_PATH": "high",
+    "DYLD_FRAMEWORK_PATH": "high",
+    "NODE_OPTIONS": "high",
+    "PYTHONPATH": "high",
+    "PERL5OPT": "high",
+    "RUBYOPT": "high",
+    "BASH_ENV": "high",
+    "JAVA_TOOL_OPTIONS": "high",
+}
+
 
 def check_runtime_privileges(server: ServerConfig):
     findings = []
@@ -67,6 +84,18 @@ def check_runtime_privileges(server: ServerConfig):
                 value,
                 location,
                 "Pass only the specific environment variables required by the server.",
+            ))
+
+    for key, value in server.env.items():
+        severity = DANGEROUS_ENV_VARS.get(str(key).upper())
+        if severity and str(value).strip():
+            findings.append(make_finding(
+                server, "MCP008", severity, "high",
+                "MCP server sets a code-injection environment variable",
+                "%s=%s" % (key, str(value)[:120]),
+                "env.%s" % key,
+                "Remove %s from the server environment unless it is required and the value is fully trusted; "
+                "this variable can load attacker-controlled code into the spawned process." % key,
             ))
 
     return unique_findings(findings)

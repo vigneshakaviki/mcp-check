@@ -12,8 +12,9 @@ from .parsers import ConfigError
 from .rules.helpers import is_placeholder, redact, unique_findings, urls_in_text
 from .rules.oauth import TOKEN_QUERY
 from .rules.package_provenance import _docker_image, _is_commit_pinned, _is_docker_pinned, _is_pinned
+from .rules.runtime_privileges import DANGEROUS_ENV_VARS
 from .rules.secrets import BEARER_VALUE, SECRET_VALUE
-from .rules.ssrf import CLOUD_METADATA_HOSTS, DANGEROUS_SCHEMES, LOCAL_NAMES, _is_private_or_reserved
+from .rules.ssrf import DANGEROUS_SCHEMES, LOCAL_NAMES, _is_cloud_metadata, _is_private_or_reserved
 from .rules.tls_security import DISABLED_VERIFY_ENV, INSECURE_FLAGS
 from .suppressions import apply_suppressions, load_suppressions
 
@@ -50,6 +51,15 @@ RISKY_COMMAND_PATTERNS = [
     (re.compile(r"(?:curl|wget)\b[^\n|]*\|\s*(?:sh|bash|zsh|fish)\b", re.IGNORECASE), "download and execute pipeline", "critical"),
     (re.compile(r"\b(?:eval|exec)\s*\(", re.IGNORECASE), "dynamic command execution", "high"),
 ]
+_ENV_INJECTION_NAMES = "|".join(re.escape(name) for name in DANGEROUS_ENV_VARS)
+ENV_INJECTION_SHELL = re.compile(
+    r"(?:^|[;&|]\s*)(?:export\s+|setx?\s+|\$env:)?\b(%s)\b\s*[=:]" % _ENV_INJECTION_NAMES,
+    re.IGNORECASE,
+)
+ENV_INJECTION_CALL = re.compile(
+    r"""(?:os\.environ\[|putenv\(|setenv\()\s*['"](%s)['"]""" % _ENV_INJECTION_NAMES,
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -149,6 +159,7 @@ def _scan_bundle(bundle: SkillBundle) -> List[Finding]:
         findings.extend(_check_urls(bundle, location, content))
         findings.extend(_check_tls(bundle, location, content))
         findings.extend(_check_package_provenance(bundle, location, content))
+        findings.extend(_check_env_injection(bundle, location, content))
     return findings
 
 
@@ -204,6 +215,25 @@ def _check_commands(bundle: SkillBundle, location: str, content: str) -> List[Fi
                     location,
                     "Review the exact instruction or script and remove privileged, destructive, or downloaded execution unless it is required and trusted.",
                 )]
+    return []
+
+
+def _check_env_injection(bundle: SkillBundle, location: str, content: str) -> List[Finding]:
+    for line in _lines(content):
+        if SHEBANG.match(line) or FENCE.match(line):
+            continue
+        match = ENV_INJECTION_SHELL.search(line) or ENV_INJECTION_CALL.search(line)
+        if match:
+            name = match.group(1).upper()
+            severity = DANGEROUS_ENV_VARS.get(name, "high")
+            return [_make_finding(
+                bundle, "MCP008", severity, "high",
+                "Skill content sets a code-injection environment variable",
+                _preview(line),
+                location,
+                "Remove %s from skill scripts unless it is required and the value is fully trusted; "
+                "this variable can load attacker-controlled code into any process launched afterward." % name,
+            )]
     return []
 
 
@@ -266,7 +296,7 @@ def _check_urls(bundle: SkillBundle, location: str, content: str) -> List[Findin
             continue
         if scheme == "file":
             continue
-        if host in CLOUD_METADATA_HOSTS:
+        if _is_cloud_metadata(host):
             findings.append(_make_finding(
                 bundle, "MCP009", "critical", "high",
                 "Skill content references a cloud metadata endpoint",
