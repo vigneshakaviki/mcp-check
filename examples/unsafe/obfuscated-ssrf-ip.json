@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "metadata-probe": {
+      "url": "https://safe.example.test/mcp",
+      "authorization": {
+        "resource_metadata": "http://2852039166/latest/meta-data/"
+      }
+    }
+  }
+}

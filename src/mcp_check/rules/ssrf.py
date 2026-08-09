@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+import re
 from urllib.parse import urlparse
 
 from ..models import ServerConfig
@@ -13,7 +14,13 @@ CLOUD_METADATA_HOSTS = {
     "metadata.google.internal",
     "metadata.azure.internal",
 }
+CLOUD_METADATA_IPS = {"169.254.169.254"}
 LOCAL_NAMES = {"localhost", "localtest.me"}
+OCTAL_OCTET = re.compile(r"^0[0-7]+$")
+HEX_OCTET = re.compile(r"^0[xX][0-9a-fA-F]+$")
+DECIMAL_OCTET = re.compile(r"^(?:0|[1-9][0-9]*)$")
+WHOLE_DECIMAL_ADDRESS = re.compile(r"^[0-9]{7,10}$")
+WHOLE_HEX_ADDRESS = re.compile(r"^0[xX][0-9a-fA-F]{6,8}$")
 
 
 def check_ssrf_targets(server: ServerConfig):
@@ -35,7 +42,7 @@ def check_ssrf_targets(server: ServerConfig):
                     location,
                     "Reject javascript:, data:, file:, and similar URL schemes in MCP authorization or metadata fields.",
                 ))
-            elif host in CLOUD_METADATA_HOSTS:
+            elif _is_cloud_metadata(host):
                 findings.append(make_finding(
                     server, "MCP009", "critical", "high",
                     "MCP configuration references a cloud metadata endpoint",
@@ -58,10 +65,16 @@ def _is_local_transport_url(scheme: str, host: str) -> bool:
     return scheme in {"http", "https"} and (host in LOCAL_NAMES or host in {"127.0.0.1", "::1"})
 
 
+def _is_cloud_metadata(host: str) -> bool:
+    if host in CLOUD_METADATA_HOSTS:
+        return True
+    address = _parse_ip(host)
+    return address is not None and str(address) in CLOUD_METADATA_IPS
+
+
 def _is_private_or_reserved(host: str) -> bool:
-    try:
-        address = ipaddress.ip_address(host.strip("[]"))
-    except ValueError:
+    address = _parse_ip(host)
+    if address is None:
         return False
     return any((
         address.is_loopback,
@@ -71,3 +84,52 @@ def _is_private_or_reserved(host: str) -> bool:
         address.is_multicast,
         address.is_unspecified,
     ))
+
+
+def _parse_ip(host: str):
+    stripped = host.strip("[]")
+    try:
+        return ipaddress.ip_address(stripped)
+    except ValueError:
+        return _decode_obfuscated_ipv4(stripped)
+
+
+def _decode_obfuscated_ipv4(host: str):
+    # Bypass class where 127.0.0.1 (or another private/metadata address) is written as a
+    # single decimal/hex integer or as dotted octets with octal/hex encoding, which
+    # ipaddress.ip_address() rejects but common HTTP clients and resolvers still accept.
+    # See OWASP SSRF Prevention Cheat Sheet and CVE-class "IPFuscation" bypass writeups.
+    if WHOLE_DECIMAL_ADDRESS.match(host):
+        try:
+            return ipaddress.IPv4Address(int(host))
+        except ValueError:
+            return None
+    if WHOLE_HEX_ADDRESS.match(host):
+        try:
+            return ipaddress.IPv4Address(int(host, 16))
+        except ValueError:
+            return None
+
+    parts = host.split(".")
+    if len(parts) != 4:
+        return None
+    if all(DECIMAL_OCTET.match(part) for part in parts):
+        return None  # plain decimal dotted-quad is already handled by ipaddress.ip_address
+
+    octets = [_decode_ip_octet(part) for part in parts]
+    if any(value is None or not 0 <= value <= 255 for value in octets):
+        return None
+    try:
+        return ipaddress.IPv4Address(".".join(str(value) for value in octets))
+    except ValueError:
+        return None
+
+
+def _decode_ip_octet(token: str):
+    if HEX_OCTET.match(token):
+        return int(token, 16)
+    if OCTAL_OCTET.match(token):
+        return int(token, 8)
+    if DECIMAL_OCTET.match(token):
+        return int(token)
+    return None
