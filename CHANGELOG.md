@@ -4,6 +4,9 @@ All notable changes to `mcp-check` are documented here.
 
 ## Unreleased
 
+- Fixed the GitHub Action installing from the caller's repository instead of the Action directory, allowing scans in repositories without Python packaging.
+- Added the `upload-sarif` Action input so teams can run severity-gated CI checks without uploading to GitHub code scanning.
+- Added consumer-workspace Action regression checks for clean configs, risky configs, and generated SARIF reports.
 - Added `scan-skill` for offline scanning of skill bundles rooted at `SKILL.md`, including sibling `scripts/`, `references/`, and text assets.
 - `MCP008` now detects code-injection environment variables (`LD_PRELOAD`, `DYLD_INSERT_LIBRARIES`, `NODE_OPTIONS`, `PYTHONPATH`, and similar) set on an MCP server or exported in skill scripts.
 - `MCP009` now decodes decimal, hexadecimal, and octal IP obfuscation (for example `2130706433` for `127.0.0.1`) before evaluating SSRF and cloud-metadata targets, closing a filter-bypass gap shared with skill URL scanning.
