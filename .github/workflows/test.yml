@@ -14,3 +14,58 @@ jobs:
       - run: uv run --with 'pytest>=8' pytest -q
       - run: uv run mcp-check scan examples/safe/pinned-local-server.json --fail-on low
       - run: uv run mcp-check scan examples/unsafe/docker-socket.json
+
+  action-consumer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - fixture: safe/pinned-local-server.json
+            outcome: success
+          - fixture: unsafe/docker-socket.json
+            outcome: failure
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: .mcp-check-action
+      - name: Prepare a consumer repository without Python packaging
+        shell: bash
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          test ! -e pyproject.toml
+          test ! -e setup.py
+          cp ".mcp-check-action/examples/$FIXTURE" mcp.json
+      - name: Run the Action from the consumer workspace
+        id: scan
+        continue-on-error: true
+        uses: ./.mcp-check-action
+        with:
+          paths: mcp.json
+          fail-on: high
+          upload-sarif: "false"
+      - name: Verify scan outcome and report
+        shell: bash
+        env:
+          SCAN_OUTCOME: ${{ steps.scan.outcome }}
+          EXPECTED_OUTCOME: ${{ matrix.outcome }}
+          SARIF_PATH: ${{ steps.scan.outputs.sarif }}
+        run: |
+          test "$SCAN_OUTCOME" = "$EXPECTED_OUTCOME"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path(os.environ["SARIF_PATH"]).read_text())
+          assert report["version"] == "2.1.0"
+          results = [result for run in report["runs"] for result in run["results"]]
+          if os.environ["EXPECTED_OUTCOME"] == "success":
+              assert results == [], results
+          else:
+              assert any(result["ruleId"] == "MCP008" for result in results), results
+          for result in results:
+              assert result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "mcp.json"
+          PY
