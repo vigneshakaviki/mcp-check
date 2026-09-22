@@ -151,6 +151,16 @@ uv run mcp-check scan examples/unsafe/docker-socket.json
 
 ## Scan Commands
 
+Scan repository-local Claude Code, Cursor, and VS Code MCP configs together:
+
+```bash
+mcp-check scan --project . --fail-on high
+```
+
+This checks `.mcp.json`, `.cursor/mcp.json`, and `.vscode/mcp.json` in the
+specified directory. See [project discovery](docs/configuration.md#project-discovery)
+for scope and report options.
+
 ```bash
 mcp-check --version
 mcp-check rules

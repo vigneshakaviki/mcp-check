@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from . import __version__
+from .baseline import diff_findings, load_signatures
 from .models import SEVERITY_ORDER
 from .parsers import ConfigError
-from .presets import candidate_paths, existing_preset_paths
+from .presets import candidate_paths, existing_preset_paths, project_paths
 from .reporters import to_json, to_sarif, to_terminal
 from .rule_catalog import RULE_CATALOG
 from .scanner import scan_file
@@ -21,8 +23,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version="mcp-check %s" % __version__)
     commands = parser.add_subparsers(dest="command", required=True)
     scan = commands.add_parser("scan", help="scan an MCP configuration")
-    scan.add_argument("path", type=Path, nargs="?", help="JSON, YAML, or TOML MCP configuration")
-    scan.add_argument("--preset", choices=preset_choices, help="scan existing configs from common MCP client paths")
+    source = scan.add_mutually_exclusive_group(required=True)
+    source.add_argument("path", type=Path, nargs="?", help="JSON, YAML, or TOML MCP configuration")
+    source.add_argument("--preset", choices=preset_choices, help="scan existing configs from common MCP client paths")
+    source.add_argument("--project", type=Path, metavar="DIR", help="scan Claude Code, Cursor, and VS Code configs in a project directory")
     scan.add_argument("--suppressions", type=Path, help="JSON, YAML, or TOML suppression file")
     scan.add_argument("--baseline", type=Path, help="compare against a previous mcp-check JSON or SARIF report and only show new findings")
     scan.add_argument("--format", choices=("terminal", "json", "sarif"), default="terminal")
@@ -66,7 +70,22 @@ def main(argv=None) -> None:
         if args.command == "scan-skill":
             result = scan_skill(args.path, args.suppressions, args.baseline)
         else:
-            if args.preset:
+            if args.project is not None:
+                paths = project_paths(args.project)
+                if not paths:
+                    raise ConfigError("no project MCP config files found in %s" % args.project)
+                results = []
+                for path in paths:
+                    try:
+                        results.append(scan_file(path, args.suppressions))
+                    except ConfigError as exc:
+                        raise ConfigError("%s: %s" % (path, exc)) from exc
+                result = _merge_results(results)
+                if args.baseline:
+                    active, summary = diff_findings(result.findings, load_signatures(args.baseline))
+                    summary["source"] = str(args.baseline)
+                    result = replace(result, findings=active, baseline=summary)
+            elif args.preset:
                 paths = existing_preset_paths(args.preset)
                 if not paths:
                     print("mcp-check: error: no existing config paths found for preset %r" % args.preset, file=sys.stderr)

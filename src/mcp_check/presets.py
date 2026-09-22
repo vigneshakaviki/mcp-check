@@ -4,6 +4,22 @@ import platform
 from pathlib import Path
 from typing import Dict, List
 
+from .parsers import ConfigError
+
+
+def project_paths(root: Path) -> List[Path]:
+    """Find known project configs, without walking parents or subprojects."""
+    if not root.is_dir():
+        raise ConfigError("project directory does not exist or is not a directory: %s" % root)
+    candidates = [root / ".mcp.json", root / ".cursor" / "mcp.json", root / ".vscode" / "mcp.json"]
+    paths = []
+    for path in candidates:
+        if path.exists() or path.is_symlink():
+            if not path.is_file():
+                raise ConfigError("project config is not a readable file: %s" % path)
+            paths.append(path)
+    return paths
+
 
 def _home() -> Path:
     return Path.home()

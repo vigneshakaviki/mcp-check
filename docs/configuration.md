@@ -44,6 +44,34 @@ mcp-check scan --preset codex
 mcp-check scan --preset cursor
 ```
 
+## Project Discovery
+
+Scan known repository-local config files in one command:
+
+```bash
+mcp-check scan --project . --fail-on high
+mcp-check scan --project ./my-repo --format sarif --output results.sarif
+```
+
+Discovery checks these paths, in order:
+
+- `.mcp.json` ([Claude Code project scope](https://code.claude.com/docs/en/mcp#project-scope))
+- `.cursor/mcp.json` ([Cursor project configuration](https://cursor.com/docs/mcp))
+- `.vscode/mcp.json` ([VS Code workspace configuration](https://code.visualstudio.com/docs/agents/reference/mcp-configuration))
+
+Only the specified directory is inspected; discovery does not search parent
+directories, user profiles, or nested projects. Existing symlinked files are
+read as with explicit file scans. JSON parsing remains strict: comments and
+trailing commas are not supported. Missing optional files are skipped, but no
+matching files, malformed configs, or non-file config paths exit with code 2.
+All discovered configs are scanned independently, without client precedence
+rules or server-name deduplication. Reports list the scanned source paths.
+
+`--project`, `--preset`, and an explicit config path are mutually exclusive.
+Output formats, suppressions, and failure thresholds work as with file scans.
+`--baseline` compares against the combined project report once. Baseline and
+suppression matching use the existing server/rule fields, not file identity.
+
 ## Output Formats
 
 ```bash
