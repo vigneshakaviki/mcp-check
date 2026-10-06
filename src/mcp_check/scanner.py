@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 from .baseline import diff_findings, load_signatures
@@ -15,7 +16,7 @@ def scan_file(path: Path, suppressions_path: Path | None = None, baseline_path: 
     servers = parse_servers(config)
     findings = []
     for server in servers:
-        findings.extend(scan_server(server))
+        findings.extend(replace(finding, source=path.as_posix()) for finding in scan_server(server))
     active, suppressed = apply_suppressions(findings, load_suppressions(suppressions_path))
     baseline_summary = {}
     if baseline_path is not None:

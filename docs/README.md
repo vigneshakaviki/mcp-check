@@ -7,6 +7,7 @@ Use these docs for the main user flows:
 - [MCP security rules](rules.md): rule catalog, severity, and rationale
 - [MCP config support](configuration.md): supported config shapes, presets, and output formats
 - [GitHub Action for MCP security scanning](github-action.md): CI usage and SARIF upload
+- [Skill library scanning](skills.md): recursive discovery, file-aware baselines, and scan boundaries
 
 Core workflows:
 

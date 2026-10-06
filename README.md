@@ -5,9 +5,9 @@
 [![PyPI](https://img.shields.io/pypi/v/mcp-check-security)](https://pypi.org/project/mcp-check-security/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Offline MCP security scanner for Model Context Protocol configs and `SKILL.md` bundles.
+Review MCP configs and agent skills before they run. Offline, deterministic, and built for pull requests.
 
-`mcp-check` is a static security scanner for Model Context Protocol setup files. It helps teams audit MCP server configs and agent skill bundles before install, before approval, and before a pull request merges.
+`mcp-check` is a static security scanner for Model Context Protocol setup files and `SKILL.md` bundles. Scan locally, review actionable findings, and gate pull requests with JSON or SARIF reports. No account, API key, or model required.
 
 It detects risky shell access, embedded secrets, prompt injection language, unpinned installs, Docker privilege, private-network URLs, weak transport settings, and approval bypasses.
 
@@ -22,7 +22,7 @@ It never launches, connects to, or executes an MCP server or skill bundle.
 
 ## Why Offline Matters
 
-Most MCP security tools inspect running servers or connect to remote endpoints. `mcp-check` is different: it stays offline and reviews static config and skill files before anything executes.
+`mcp-check` reviews static config and skill files before anything executes. Once installed, scanning needs no network access and does not send content to an analysis service. Other scanners also offer local analysis; this project's focus is a small, predictable pre-execution check.
 
 That makes it useful for:
 
@@ -45,6 +45,16 @@ mcp-check scan ./claude_desktop_config.json
 ```bash
 mcp-check scan-skill ./skills/my-skill
 ```
+
+The development version can scan a whole skill library in one command:
+
+```bash
+# From a checkout until the next release:
+python -m pip install .
+mcp-check scan-skill ./skills --recursive --fail-on high
+```
+
+See [skill library scanning](docs/skills.md) for CI, baselines, and discovery boundaries.
 
 ### Add MCP Security Checks To Pull Requests
 
@@ -74,6 +84,8 @@ jobs:
 - [MCP security rules](docs/rules.md)
 - [MCP config support](docs/configuration.md)
 - [GitHub Action for MCP security scanning](docs/github-action.md)
+- [Skill library scanning](docs/skills.md)
+- [Market research and priorities](competitor-profiles/_summary.md)
 - [Packaging](PACKAGING.md)
 - [Changelog](CHANGELOG.md)
 - [Support](SUPPORT.md)
@@ -268,12 +280,11 @@ It detects embedded secrets, prompt-injection language, dangerous shell/download
 
 ## Comparison
 
-`mcp-check` is strongest when you need offline static review.
+Choose `mcp-check` for a deterministic check of local MCP configs and skill bundles before enabling them. It produces review evidence and severity-based CI gates without starting servers, contacting endpoints, or running a model.
 
-- It does not execute target servers
-- It does not connect to remote MCP endpoints
-- It focuses on pre-install, pre-approval, and CI workflows
-- It covers both MCP configs and `SKILL.md` bundles
+For broader discovery and hosted analysis, evaluate [Snyk Agent Scan](https://github.com/snyk/agent-scan). For live MCP inspection or deeper skill analysis, evaluate [Cisco MCP Scanner](https://github.com/cisco-ai-defense/mcp-scanner) and [Cisco Skill Scanner](https://github.com/cisco-ai-defense/skill-scanner). Cisco also provides local/static analysis options; offline scanning is not exclusive to this project.
+
+Static findings are signals to review, not proof that a bundle is safe. `mcp-check` does not provide runtime enforcement, malware sandboxing, semantic prompt-injection analysis, or a measured detection-rate guarantee. See the [dated research and implementation priorities](competitor-profiles/_summary.md).
 
 ## Security Research Coverage
 

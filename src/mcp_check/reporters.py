@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, Dict
+from urllib.parse import quote
 
 from . import __version__
 from .models import Finding, ScanResult, SEVERITY_ORDER
@@ -36,7 +38,7 @@ def to_terminal(result: ScanResult) -> str:
         lines.extend([
             "",
             "[%s] %s (%s confidence)" % (finding.severity.upper(), finding.title, finding.confidence),
-            "  %s %s" % (finding.rule_id, finding.location),
+            "  %s %s (%s)" % (finding.rule_id, finding.source or result.source, finding.location),
             "  Evidence: %s" % finding.evidence,
             "  Fix: %s" % finding.recommendation,
         ])
@@ -100,14 +102,20 @@ def to_sarif(result: ScanResult) -> str:
 
 
 def _sarif_result(result: ScanResult, finding: Finding, baseline_state: str | None = None) -> Dict[str, Any]:
-    properties = {"severity": finding.severity, "confidence": finding.confidence}
+    properties = {
+        "severity": finding.severity,
+        "confidence": finding.confidence,
+        "mcpCheckFinding": finding.as_dict(),
+    }
+    source = finding.source or result.source
+    uri = Path(source).as_uri() if Path(source).is_absolute() else quote(Path(source).as_posix(), safe="/")
     payload = {
             "ruleId": finding.rule_id,
             "level": _level(finding.severity),
             "message": {"text": "%s: %s" % (finding.title, finding.evidence)},
             "locations": [{
                 "physicalLocation": {
-                    "artifactLocation": {"uri": result.source},
+                    "artifactLocation": {"uri": uri},
                     "region": {"startLine": 1},
                 },
                 "logicalLocations": [{"name": "%s.%s" % (finding.server, finding.location)}],

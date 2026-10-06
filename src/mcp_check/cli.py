@@ -6,12 +6,14 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .aggregation import merge_results as _merge_results
 from .models import SEVERITY_ORDER
 from .parsers import ConfigError
 from .presets import candidate_paths, existing_preset_paths
 from .reporters import to_json, to_sarif, to_terminal
 from .rule_catalog import RULE_CATALOG
 from .scanner import scan_file
+from .skill_library import scan_skill_library
 from .skill_scanner import scan_skill
 
 
@@ -31,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     scan_skill_cmd = commands.add_parser("scan-skill", help="scan a skill bundle without executing it")
     scan_skill_cmd.add_argument("path", type=Path, help="SKILL.md file or directory containing SKILL.md")
+    scan_skill_cmd.add_argument("--recursive", action="store_true", help="scan every SKILL.md bundle under a directory")
     scan_skill_cmd.add_argument("--suppressions", type=Path, help="JSON, YAML, or TOML suppression file")
     scan_skill_cmd.add_argument("--baseline", type=Path, help="compare against a previous mcp-check JSON or SARIF report and only show new findings")
     scan_skill_cmd.add_argument("--format", choices=("terminal", "json", "sarif"), default="terminal")
@@ -64,7 +67,8 @@ def main(argv=None) -> None:
 
     try:
         if args.command == "scan-skill":
-            result = scan_skill(args.path, args.suppressions, args.baseline)
+            scanner = scan_skill_library if args.recursive else scan_skill
+            result = scanner(args.path, args.suppressions, args.baseline)
         else:
             if args.preset:
                 paths = existing_preset_paths(args.preset)
@@ -89,34 +93,3 @@ def main(argv=None) -> None:
         print(report, end="")
     if args.fail_on and any(SEVERITY_ORDER[item.severity] >= SEVERITY_ORDER[args.fail_on] for item in result.findings):
         raise SystemExit(1)
-
-
-def _merge_results(results):
-    from .models import ScanResult
-
-    capabilities = {}
-    baseline = {}
-    for result in results:
-        for key, value in result.capabilities.items():
-            if isinstance(value, list):
-                capabilities.setdefault(key, [])
-                capabilities[key].extend(item for item in value if item not in capabilities[key])
-            else:
-                capabilities[key] = bool(capabilities.get(key)) or bool(value)
-        if result.baseline:
-            baseline.setdefault("new", 0)
-            baseline.setdefault("unchanged", 0)
-            baseline.setdefault("absent", 0)
-            baseline["new"] += int(result.baseline.get("new", 0))
-            baseline["unchanged"] += int(result.baseline.get("unchanged", 0))
-            baseline["absent"] += int(result.baseline.get("absent", 0))
-
-    return ScanResult(
-        source=", ".join(result.source for result in results),
-        findings=[finding for result in results for finding in result.findings],
-        servers_scanned=sum(result.servers_scanned for result in results),
-        scanned_kind=results[0].scanned_kind if results else "MCP server",
-        suppressed_findings=[finding for result in results for finding in result.suppressed_findings],
-        capabilities=capabilities,
-        baseline=baseline,
-    )
