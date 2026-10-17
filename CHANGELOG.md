@@ -4,6 +4,9 @@ All notable changes to `mcp-check` are documented here.
 
 ## Unreleased
 
+- Fixed preset scans applying a baseline separately to each config, which could
+  overcount unchanged findings as absent. Presets now merge findings first and
+  compare the combined report once.
 - Added `scan-skill DIR --recursive` to scan local skill libraries with one report, severity gate, and baseline comparison.
 - Added per-finding source paths to JSON and terminal reports. SARIF now points to actual skill files and preserves individual config paths in merged reports.
 - Made new baselines file-aware so identical findings in different bundles are not silently treated as previously accepted. Single-bundle scans still accept legacy reports; recursive scans require source-aware baselines.

@@ -3,10 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from . import __version__
 from .aggregation import merge_results as _merge_results
+from .baseline import diff_findings, load_signatures
 from .models import SEVERITY_ORDER
 from .parsers import ConfigError
 from .presets import candidate_paths, existing_preset_paths
@@ -75,8 +77,14 @@ def main(argv=None) -> None:
                 if not paths:
                     print("mcp-check: error: no existing config paths found for preset %r" % args.preset, file=sys.stderr)
                     raise SystemExit(2)
-                results = [scan_file(path, args.suppressions, args.baseline) for path in paths]
+                # Apply baseline after merging. Applying it per file counts the
+                # same baseline findings as absent once for every preset path.
+                results = [scan_file(path, args.suppressions) for path in paths]
                 result = _merge_results(results)
+                if args.baseline:
+                    active, summary = diff_findings(result.findings, load_signatures(args.baseline))
+                    summary["source"] = str(args.baseline)
+                    result = replace(result, findings=active, baseline=summary)
             elif args.path:
                 result = scan_file(args.path, args.suppressions, args.baseline)
             else:

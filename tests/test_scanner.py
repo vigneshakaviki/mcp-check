@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from mcp_check.aggregation import merge_results
 from mcp_check.cli import main
 from mcp_check.parsers import ConfigError, load_config, parse_servers
 from mcp_check.presets import candidate_paths
@@ -481,6 +482,34 @@ def test_baseline_filters_known_findings_as_sarif(tmp_path):
     assert result.findings == []
     assert result.baseline["new"] == 0
     assert result.baseline["unchanged"] > 0
+
+
+def test_preset_baseline_is_applied_after_merging_configs(tmp_path, monkeypatch, capsys):
+    paths = [tmp_path / "first.json", tmp_path / "second.json"]
+    for path in paths:
+        path.write_text(json.dumps({
+            "mcpServers": {"server": {"command": "sudo"}},
+        }), encoding="utf-8")
+
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(
+        json.dumps(merge_results([scan_file(path) for path in paths]).as_dict()),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "mcp_check.cli.existing_preset_paths",
+        lambda name: paths,
+    )
+
+    main([
+        "scan", "--preset", "all", "--baseline", str(baseline),
+        "--format", "json",
+    ])
+    result = json.loads(capsys.readouterr().out)
+    assert result["findings"] == []
+    assert result["baseline"]["new"] == 0
+    assert result["baseline"]["unchanged"] == 2
+    assert result["baseline"]["absent"] == 0
 
 
 def test_skill_baseline_filters_known_findings(tmp_path):
