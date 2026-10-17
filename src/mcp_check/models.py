@@ -50,14 +50,17 @@ class Finding:
     recommendation: str
     server: str
     suppression_reason: Optional[str] = None
+    source: Optional[str] = None
 
-    def signature(self) -> tuple[str, str, str, str, str]:
-        return (self.rule_id, self.server, self.location, self.title, self.evidence)
+    def signature(self) -> tuple[str, str, str, str, str, str]:
+        return (self.rule_id, self.server, self.location, self.title, self.evidence, self.source or "")
 
     def as_dict(self) -> Dict[str, Any]:
         value = asdict(self)
         if value["suppression_reason"] is None:
             del value["suppression_reason"]
+        if value["source"] is None:
+            del value["source"]
         return value
 
     def suppressed(self, reason: str) -> "Finding":

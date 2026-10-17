@@ -4,6 +4,14 @@ All notable changes to `mcp-check` are documented here.
 
 ## Unreleased
 
+- Fixed preset scans applying a baseline separately to each config, which could
+  overcount unchanged findings as absent. Presets now merge findings first and
+  compare the combined report once.
+- Added `scan-skill DIR --recursive` to scan local skill libraries with one report, severity gate, and baseline comparison.
+- Added per-finding source paths to JSON and terminal reports. SARIF now points to actual skill files and preserves individual config paths in merged reports.
+- Made new baselines file-aware so identical findings in different bundles are not silently treated as previously accepted. Single-bundle scans still accept legacy reports; recursive scans require source-aware baselines.
+- Reject symlinked skill entry files and content inside bundles instead of reading linked targets. Recursive discovery skips symlinked directories and common dependency/cache directories.
+- Added dated market research and narrowed positioning to deterministic pre-execution review, with explicit analysis limits.
 - Added `scan-skill` for offline scanning of skill bundles rooted at `SKILL.md`, including sibling `scripts/`, `references/`, and text assets.
 - `MCP008` now detects code-injection environment variables (`LD_PRELOAD`, `DYLD_INSERT_LIBRARIES`, `NODE_OPTIONS`, `PYTHONPATH`, and similar) set on an MCP server or exported in skill scripts.
 - `MCP009` now decodes decimal, hexadecimal, and octal IP obfuscation (for example `2130706433` for `127.0.0.1`) before evaluating SSRF and cloud-metadata targets, closing a filter-bypass gap shared with skill URL scanning.

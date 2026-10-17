@@ -8,7 +8,7 @@ from .models import Finding
 from .parsers import ConfigError
 
 
-Signature = Tuple[str, str, str, str, str]
+Signature = Tuple[str, str, str, str, str, str]
 
 
 def load_signatures(path: Path | None) -> Set[Signature]:
@@ -34,15 +34,24 @@ def load_signatures(path: Path | None) -> Set[Signature]:
     raise ConfigError("baseline file must be mcp-check JSON or SARIF 2.1.0 output")
 
 
-def diff_findings(findings: Iterable[Finding], baseline: Set[Signature]) -> tuple[list[Finding], Dict[str, int]]:
+def diff_findings(findings: Iterable[Finding], baseline: Set[Signature], *, allow_legacy: bool = True) -> tuple[list[Finding], Dict[str, int]]:
     active = []
     unchanged = 0
+    matched = set()
     for finding in findings:
-        if finding.signature() in baseline:
+        signature = finding.signature()
+        legacy = signature[:-1] + ("",)
+        match = None
+        if signature in baseline:
+            match = signature
+        elif allow_legacy and legacy in baseline:
+            match = legacy
+        if match is not None:
+            matched.add(match)
             unchanged += 1
             continue
         active.append(finding)
-    baseline_only = max(len(baseline) - unchanged, 0)
+    baseline_only = len(baseline - matched)
     summary = {
         "new": len(active),
         "unchanged": unchanged,
@@ -64,10 +73,14 @@ def _finding_signature(item: Dict[str, Any]) -> Signature:
         str(item.get("location", "")),
         str(item.get("title", "")),
         str(item.get("evidence", "")),
+        str(item.get("source", "")),
     )
 
 
 def _sarif_signature(item: Dict[str, Any]) -> Signature:
+    properties = item.get("properties") or {}
+    if isinstance(properties.get("mcpCheckFinding"), dict):
+        return _finding_signature(properties["mcpCheckFinding"])
     location = ""
     server = ""
     locations = item.get("locations") or []
@@ -88,6 +101,7 @@ def _sarif_signature(item: Dict[str, Any]) -> Signature:
         location,
         title,
         evidence,
+        "",
     )
 
 

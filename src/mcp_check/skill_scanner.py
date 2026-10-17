@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -104,15 +105,19 @@ def load_skill_bundle(path: Path) -> SkillBundle:
         raise ConfigError("skill scan expects a SKILL.md file or a directory containing SKILL.md")
     if not skill_file.exists():
         raise ConfigError("skill bundle is missing SKILL.md: %s" % root)
+    if skill_file.is_symlink() or not skill_file.is_file():
+        raise ConfigError("skill entry must be a regular, non-symlink file: %s" % skill_file)
 
     files: Dict[str, str] = {}
     files["SKILL.md"] = _read_text(skill_file)
 
     for directory in ("scripts", "references", "assets"):
         base = root / directory
+        if base.is_symlink():
+            raise ConfigError("skill bundle contains a symlink: %s" % base)
         if not base.is_dir():
             continue
-        for candidate in sorted(item for item in base.rglob("*") if item.is_file()):
+        for candidate in _bundle_files(base):
             if not _should_scan_file(directory, candidate):
                 continue
             content = _read_optional_text(candidate)
@@ -120,6 +125,21 @@ def load_skill_bundle(path: Path) -> SkillBundle:
                 files[str(candidate.relative_to(root))] = content
 
     return SkillBundle(name=root.name, root=root, files=files)
+
+
+def _walk_error(error: OSError) -> None:
+    raise ConfigError("could not read skill directory: %s" % error) from error
+
+
+def _bundle_files(base: Path) -> Iterable[Path]:
+    for directory, dirs, files in os.walk(base, followlinks=False, onerror=_walk_error):
+        dirs.sort()
+        for name in sorted(dirs + files):
+            candidate = Path(directory) / name
+            if candidate.is_symlink():
+                raise ConfigError("skill bundle contains a symlink: %s" % candidate)
+            if name in files and candidate.is_file():
+                yield candidate
 
 
 def _read_text(path: Path) -> str:
@@ -173,7 +193,10 @@ def _make_finding(
     location: str,
     recommendation: str,
 ) -> Finding:
-    return Finding(rule_id, severity, confidence, title, evidence, location, recommendation, bundle.name)
+    return Finding(
+        rule_id, severity, confidence, title, evidence, location, recommendation,
+        bundle.name, source=(bundle.root / location).as_posix(),
+    )
 
 
 def _check_metadata(bundle: SkillBundle, location: str, content: str) -> List[Finding]:
